@@ -1,162 +1,94 @@
-# MicroSaaS Template
+# Faith Insurance CRM
 
-> **Clone. Define. Build.** Full-stack SaaS in minutes.
+Internal CRM for an insurance agency selling third-party policies. Agents
+manage their own leads; admins see and manage every agent's pipeline.
+
+**Stack:** Next.js 14 (App Router) · TypeScript · Tailwind CSS · Supabase
+(Postgres + Auth, with Row Level Security enforcing agent/admin data access).
 
 ---
 
-## Quick Start
+## 1. Create a Supabase project
+
+1. Go to [supabase.com](https://supabase.com) → New project.
+2. Once it's provisioned, go to **Project Settings > API** and copy:
+   - Project URL
+   - `anon` `public` key
+   - `service_role` key (keep this one secret — server-only)
+
+## 2. Run the database schema
+
+1. Open **SQL Editor** in your Supabase project.
+2. Paste the contents of `supabase/schema.sql` and run it.
+   This creates the `users`, `leads`, and `lead_notes` tables, the
+   `lead_status`/`call_type`/`user_role` enums, all Row Level Security
+   policies, and the trigger that auto-provisions a `public.users` profile
+   whenever a new auth user is created.
+
+## 3. Create your first admin user
+
+1. In Supabase: **Authentication > Users > Add user**, create yourself with
+   an email + password.
+2. Back in the **SQL Editor**, promote yourself to admin:
+   ```sql
+   update public.users set role = 'admin' where email = 'you@example.com';
+   ```
+3. From then on, new agents can be created from the in-app **Agents** admin
+   screen — no need to touch Supabase directly again.
+
+## 4. Configure environment variables
 
 ```bash
-# 1. Clone
-git clone https://github.com/manojkanur/MicroSaaS-Template-Private.git my-saas
-cd my-saas
-
-# 2. Define your product
-# Edit INITIAL.md with your product details
-
-# 3. Generate blueprint
-/generate-prp INITIAL.md
-
-# 4. Build with parallel agents
-/execute-prp PRPs/[name]-prp.md
+cp .env.local.example .env.local
 ```
 
----
+Fill in the three values from step 1.
 
-## What You Get
-
-- FastAPI backend with JWT + Google OAuth
-- React frontend with modern UI (Framer Motion)
-- PostgreSQL database with migrations
-- Docker + CI/CD ready
-- 80%+ test coverage
-
----
-
-## How It Works
-
-```
-INITIAL.md → /generate-prp → PRP blueprint → /execute-prp → Full App
-
-Phase 1 (Parallel):
-├─ DATABASE-AGENT  → Models + migrations
-├─ BACKEND-AGENT   → API structure
-├─ FRONTEND-AGENT  → React setup
-└─ DEVOPS-AGENT    → Docker + CI
-
-Phase 2 (Per Module):
-├─ Backend endpoints
-└─ Frontend pages
-
-Phase 3 (Parallel):
-├─ TEST-AGENT      → 80%+ coverage
-└─ REVIEW-AGENT    → Security audit
-```
-
----
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `INITIAL.md` | Define your product |
-| `CLAUDE.md` | Project rules |
-| `skills/*.md` | Code patterns (5 files) |
-| `agents/*.md` | Agent definitions |
-| `.claude/commands/` | Custom commands |
-
----
-
-## Skills (5 files)
-
-| Skill | Contains |
-|-------|----------|
-| `BACKEND.md` | FastAPI + JWT + OAuth + Errors |
-| `FRONTEND.md` | React + UI Kit + API integration |
-| `DATABASE.md` | SQLAlchemy + Alembic |
-| `TESTING.md` | pytest + Vitest |
-| `DEPLOYMENT.md` | Docker + GitHub Actions |
-
----
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/setup-project` | Interactive wizard |
-| `/generate-prp` | Create implementation blueprint |
-| `/execute-prp` | Build with parallel agents |
-
----
-
-## Tech Stack
-
-- **Backend:** FastAPI + Python 3.11+
-- **Frontend:** React + TypeScript + Vite
-- **Database:** PostgreSQL + SQLAlchemy
-- **Auth:** JWT + Google OAuth
-- **UI:** Chakra UI or Tailwind + Framer Motion
-- **Deploy:** Docker + GitHub Actions
-
----
-
-## Example
+## 5. Install and run
 
 ```bash
-# Define an invoice SaaS in INITIAL.md:
-# - Module: Invoices (CRUD)
-# - Module: Clients (CRUD)
-# - Module: Dashboard
-
-/generate-prp INITIAL.md
-# Creates PRPs/invoice-saas-prp.md
-
-/execute-prp PRPs/invoice-saas-prp.md
-# 4 agents build in parallel
-# ~20-30 minutes for complete app
-```
-
----
-
-## Output Structure
-
-```
-my-saas/
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── models/
-│   │   ├── routers/
-│   │   ├── services/
-│   │   └── auth/
-│   ├── alembic/
-│   └── tests/
-├── frontend/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── hooks/
-│       └── services/
-├── docker-compose.yml
-└── .github/workflows/
-```
-
----
-
-## Run Locally
-
-```bash
-# Backend
-cd backend
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn app.main:app --reload
-
-# Frontend
-cd frontend
 npm install
 npm run dev
-
-# Docker
-docker-compose up -d
 ```
+
+Visit `http://localhost:3000` — you'll land on `/login`. Sign in with the
+admin account from step 3.
+
+---
+
+## Project structure
+
+```
+src/
+├── app/
+│   ├── login/            # public sign-in page
+│   ├── agent/             # agent-only routes (own leads)
+│   ├── admin/             # admin-only routes (all leads, agents, upload)
+│   └── api/                # route handlers using the service-role key
+├── components/
+│   ├── ui/                 # design system primitives
+│   ├── layout/              # Sidebar, Topbar, MobileNav
+│   └── auth/                # LoginForm, SignOutButton
+├── lib/supabase/            # client/server/admin/middleware helpers
+└── types/                   # database + domain types
+
+supabase/
+└── schema.sql               # tables, enums, RLS policies, triggers
+```
+
+## Security model
+
+Role-based access is enforced in two layers:
+
+1. **Postgres Row Level Security** (`supabase/schema.sql`) — the real
+   boundary. An agent's queries are scoped to their own leads at the
+   database level regardless of what the UI sends.
+2. **Next.js middleware** (`src/middleware.ts`) — a UX layer that redirects
+   unauthenticated users to `/login` and keeps agents/admins in their own
+   section of the app.
+
+## Known tradeoff
+
+Pinned to Next.js 14.2.35 (the latest stable 14.x release) per the project
+spec. Several `next`/`postcss` advisories are fixed only in Next 15/16;
+upgrading is a deliberate future decision, not an oversight.
