@@ -54,6 +54,31 @@ npm run dev
 Visit `http://localhost:3000` — you'll land on `/login`. Sign in with the
 admin account from step 3.
 
+## 6. Deploy to Vercel
+
+1. Push this repo to GitHub (skip if already done).
+2. Go to [vercel.com](https://vercel.com) → **Add New… > Project** → import
+   the GitHub repo. Vercel auto-detects Next.js — leave build settings as
+   default (`npm run build`).
+3. Before the first deploy, add the same three variables from step 4 under
+   **Project Settings > Environment Variables**, applied to Production,
+   Preview, and Development:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   SUPABASE_SERVICE_ROLE_KEY
+   ```
+4. Deploy. Vercel gives you a `https://<project>.vercel.app` URL (or attach
+   a custom domain under Project Settings > Domains).
+5. In Supabase, go to **Authentication > URL Configuration** and set **Site
+   URL** to that production URL. The app only uses email/password sign-in
+   today so this isn't load-bearing yet, but it's what Supabase uses for
+   password-reset emails and any OAuth provider you add later — worth
+   setting correctly now rather than debugging a redirect later.
+
+Every push to `main` redeploys automatically once the GitHub integration is
+connected; pushes to other branches get their own preview URL.
+
 ---
 
 ## Project structure
