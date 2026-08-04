@@ -1,9 +1,14 @@
 -- ============================================================================
--- Faith Insurance CRM — initial schema
+-- Faith Insurance CRM — schema
 -- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query)
 -- on a fresh project. Safe to re-run only after a full reset — it does not
 -- use `if not exists` guards for types/policies so re-running against an
 -- already-provisioned project will error on duplicates.
+--
+-- If you already ran an earlier version of this file against a live project
+-- (lead_status as a fixed enum, no lead_statuses table), do NOT re-run this
+-- file — apply supabase/migrations/0002_lead_statuses_and_profile_fields.sql
+-- instead, which migrates that project to this same end state in place.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -11,14 +16,6 @@
 -- ----------------------------------------------------------------------------
 
 create type public.user_role as enum ('agent', 'admin');
-
-create type public.lead_status as enum (
-  'New',
-  'Contacted',
-  'Quote Shared',
-  'Converted',
-  'Lost'
-);
 
 create type public.call_type as enum (
   'Inbound Call',
@@ -34,15 +31,38 @@ create type public.call_type as enum (
 -- ----------------------------------------------------------------------------
 
 -- One row per authenticated user, 1:1 with auth.users. Holds the app-facing
--- profile (name/email/role) that RLS policies key off of.
+-- profile (name/email/role/birthday) that RLS policies key off of.
 create table public.users (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null,
   email text not null unique,
   role public.user_role not null default 'agent',
+  birthday date,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Admin-manageable lead pipeline stages. Runtime-editable (add/rename/
+-- recolor/reorder/delete) so the sales pipeline isn't hardcoded in the DB
+-- schema. is_won / is_lost drive leads.converted and leads.converted_at.
+create table public.lead_statuses (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  color text not null check (color ~* '^#[0-9a-f]{6}$'),
+  sort_order integer not null default 0,
+  is_won boolean not null default false,
+  is_lost boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint lead_statuses_not_won_and_lost check (not (is_won and is_lost))
+);
+
+insert into public.lead_statuses (id, name, color, sort_order, is_won, is_lost)
+values
+  ('00000000-0000-0000-0000-000000000001', 'New',          '#3B82F6', 1, false, false),
+  ('00000000-0000-0000-0000-000000000002', 'Contacted',    '#F59E0B', 2, false, false),
+  ('00000000-0000-0000-0000-000000000003', 'Quote Shared', '#8B5CF6', 3, false, false),
+  ('00000000-0000-0000-0000-000000000004', 'Converted',    '#10B981', 4, true,  false),
+  ('00000000-0000-0000-0000-000000000005', 'Lost',         '#EF4444', 5, false, true);
 
 create table public.leads (
   id uuid primary key default gen_random_uuid(),
@@ -52,18 +72,20 @@ create table public.leads (
   email text,
   product_pitched text,
   value numeric(12, 2) not null default 0,
-  lead_status public.lead_status not null default 'New',
-  -- Derived, not writable: a lead is only "quote shared" / "converted" once
-  -- its status says so. Keeps a single source of truth instead of letting
-  -- these drift independently of lead_status.
-  quote_shared boolean generated always as (
-    lead_status in ('Quote Shared', 'Converted')
-  ) stored,
-  converted boolean generated always as (
-    lead_status = 'Converted'
-  ) stored,
+  status_id uuid not null references public.lead_statuses (id) on delete restrict
+    default '00000000-0000-0000-0000-000000000001',
+  -- Kept in sync by trg_leads_sync_converted (not app-writable in practice):
+  -- true iff status_id currently points at an is_won status.
+  converted boolean not null default false,
+  -- Set to now() the moment converted flips false->true; cleared to null if
+  -- later flipped true->false. Drives the monthly "closed cases" report.
+  converted_at timestamptz,
   policy_start_date date,
   policy_end_date date,
+  next_follow_up_date date,
+  proposal_amount numeric(12, 2),
+  proposal_sent_date date,
+  proposal_notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -82,9 +104,11 @@ create table public.lead_notes (
 -- ----------------------------------------------------------------------------
 
 create index idx_leads_agent_id on public.leads (agent_id);
-create index idx_leads_status on public.leads (lead_status);
+create index idx_leads_status_id on public.leads (status_id);
 create index idx_leads_mobile_number on public.leads (mobile_number);
 create index idx_leads_created_at on public.leads (created_at desc);
+create index idx_leads_next_follow_up_date on public.leads (next_follow_up_date)
+  where next_follow_up_date is not null;
 create index idx_lead_notes_lead_id on public.lead_notes (lead_id, created_at desc);
 
 -- ----------------------------------------------------------------------------
@@ -151,28 +175,125 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
+-- Keeps leads.converted / leads.converted_at in sync with the is_won flag of
+-- the lead's current status_id. converted_at is stamped the moment
+-- converted flips false->true and cleared if it flips back — moving between
+-- two different won statuses (or two different non-won statuses) never
+-- resets it, so the monthly "closed cases" report stays accurate even if a
+-- status is later renamed/re-split.
+create or replace function public.sync_lead_converted()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_is_won boolean;
+begin
+  select is_won into v_is_won
+  from public.lead_statuses
+  where id = new.status_id;
+
+  v_is_won := coalesce(v_is_won, false);
+  new.converted := v_is_won;
+
+  if TG_OP = 'INSERT' then
+    -- OLD is not available on INSERT; a lead created directly into a won
+    -- status is converted from the moment it exists.
+    new.converted_at := case when v_is_won then now() else null end;
+  else
+    if v_is_won and not coalesce(old.converted, false) then
+      new.converted_at := now();
+    elsif not v_is_won and coalesce(old.converted, false) then
+      new.converted_at := null;
+    else
+      new.converted_at := old.converted_at;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger trg_leads_sync_converted
+before insert or update of status_id on public.leads
+for each row execute function public.sync_lead_converted();
+
+-- Prevents a non-admin from escalating their own role (or changing
+-- email/id/created_at) via a self-submitted UPDATE on public.users. RLS is
+-- row-level, not column-level, so a bare "id = auth.uid()" update policy
+-- would otherwise permit changing ANY column on your own row — this trigger
+-- is the actual enforcement point, leaving only name/birthday genuinely
+-- self-editable.
+create or replace function public.protect_users_privileged_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if not public.is_admin() then
+    new.role := old.role;
+    new.email := old.email;
+    new.id := old.id;
+    new.created_at := old.created_at;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_users_protect_privileged_columns
+before update on public.users
+for each row execute function public.protect_users_privileged_columns();
+
 -- ----------------------------------------------------------------------------
 -- 5. Row Level Security
 -- ----------------------------------------------------------------------------
 
 alter table public.users enable row level security;
+alter table public.lead_statuses enable row level security;
 alter table public.leads enable row level security;
 alter table public.lead_notes enable row level security;
 
 -- users: everyone can read their own profile; admins can read everyone's
--- (needed for agent-name filters/dropdowns on the admin dashboard).
+-- (needed for agent-name filters/dropdowns on the admin dashboard, and for
+-- the admin-side "whose birthday is today" check).
 create policy "users_select" on public.users
 for select
 using (id = auth.uid() or public.is_admin());
 
--- users: only admins can edit profiles (e.g. changing a role). There is
--- intentionally no insert policy for authenticated/anon — rows are created
--- only via the handle_new_user trigger (security definer) or the service
--- role key (admin-invite API route), both of which bypass RLS.
+-- users: admins can edit anyone's profile (e.g. changing a role).
 create policy "users_update_admin_only" on public.users
 for update
 using (public.is_admin())
 with check (public.is_admin());
+
+-- users: a signed-in user can update their own row — restricted in practice
+-- to name/birthday by trg_users_protect_privileged_columns above. There is
+-- intentionally no insert policy for authenticated/anon — rows are created
+-- only via the handle_new_user trigger (security definer) or the service
+-- role key (admin-invite API route), both of which bypass RLS.
+create policy "users_self_update" on public.users
+for update
+using (id = auth.uid())
+with check (id = auth.uid());
+
+-- lead_statuses: any authenticated user can read (status badges/filters/
+-- dropdowns app-wide); only admins can manage the status list itself.
+create policy "lead_statuses_select" on public.lead_statuses
+for select
+using (auth.uid() is not null);
+
+create policy "lead_statuses_insert" on public.lead_statuses
+for insert
+with check (public.is_admin());
+
+create policy "lead_statuses_update" on public.lead_statuses
+for update
+using (public.is_admin())
+with check (public.is_admin());
+
+create policy "lead_statuses_delete" on public.lead_statuses
+for delete
+using (public.is_admin());
 
 -- leads: an agent sees only their own leads; admins see all.
 create policy "leads_select" on public.leads

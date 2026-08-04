@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, Contact, Users, UploadCloud } from "lucide-react";
+import {
+  LayoutDashboard,
+  Contact,
+  Users,
+  UploadCloud,
+  Tag,
+  Award,
+} from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -19,6 +26,8 @@ export const agentNavItems: NavItem[] = [
 export const adminNavItems: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/leads", label: "All Leads", icon: Contact },
+  { href: "/admin/closed-cases", label: "Closed Cases", icon: Award },
+  { href: "/admin/statuses", label: "Lead Statuses", icon: Tag },
   { href: "/admin/agents", label: "Agents", icon: Users },
   { href: "/admin/upload", label: "Bulk Upload", icon: UploadCloud },
 ];

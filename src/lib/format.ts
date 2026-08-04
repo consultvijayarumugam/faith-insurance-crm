@@ -14,6 +14,13 @@ export function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+/** value is a "YYYY-MM" month string (from an <input type="month">). */
+export function formatMonthLabel(value: string) {
+  return new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(
+    new Date(`${value}-01T00:00:00`)
+  );
+}
+
 export function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",

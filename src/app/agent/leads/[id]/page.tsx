@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LeadInfoCard } from "@/components/leads/lead-info-card";
 import { NotesTimeline, type TimelineNote } from "@/components/leads/notes-timeline";
 import { AddNoteForm } from "@/components/leads/add-note-form";
+import type { Lead } from "@/types";
 
 export default async function AgentLeadDetailPage({
   params,
@@ -15,11 +16,13 @@ export default async function AgentLeadDetailPage({
   const supabase = await createClient();
 
   // RLS returns no row if this lead doesn't belong to the signed-in agent.
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  const [{ data: lead }, { data: statuses }] = await Promise.all([
+    supabase.from("leads").select("*, status:lead_statuses(*)").eq("id", params.id).single(),
+    supabase
+      .from("lead_statuses")
+      .select("id, name, color, sort_order, is_won, is_lost")
+      .order("sort_order"),
+  ]);
 
   if (!lead) notFound();
 
@@ -61,7 +64,7 @@ export default async function AgentLeadDetailPage({
         Back to leads
       </Link>
 
-      <LeadInfoCard lead={lead} />
+      <LeadInfoCard lead={lead as unknown as Lead} statuses={statuses ?? []} />
 
       <Card>
         <CardContent className="space-y-6">

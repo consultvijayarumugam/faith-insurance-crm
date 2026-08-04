@@ -37,6 +37,7 @@ export function MappingStep({
   onChange,
   onContinue,
   onBack,
+  validStatusNames,
 }: {
   headers: string[];
   rowCount: number;
@@ -44,6 +45,7 @@ export function MappingStep({
   onChange: (field: LeadField, column: string) => void;
   onContinue: () => void;
   onBack: () => void;
+  validStatusNames: string[];
 }) {
   const missingRequired = REQUIRED_MAPPING_FIELDS.filter((f) => !mapping[f]);
   const canContinue = missingRequired.length === 0;
@@ -79,6 +81,12 @@ export function MappingStep({
                   </option>
                 ))}
               </Select>
+              {field === "lead_status" && (
+                <p className="text-xs text-slate-400">
+                  Recognized values: {validStatusNames.join(", ")}. Anything else (or blank) falls
+                  back to &quot;{validStatusNames[0]}&quot;.
+                </p>
+              )}
             </div>
           );
         })}

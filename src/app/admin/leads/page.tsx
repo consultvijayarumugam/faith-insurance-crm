@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { AdminLeadsTable } from "@/components/leads/admin-leads-table";
-import type { Lead, LeadStatus } from "@/types";
+import type { Lead } from "@/types";
 
 export default async function AdminLeadsPage({
   searchParams,
@@ -12,6 +12,7 @@ export default async function AdminLeadsPage({
     product?: string;
     from?: string;
     to?: string;
+    followup?: string;
   };
 }) {
   const supabase = await createClient();
@@ -19,7 +20,7 @@ export default async function AdminLeadsPage({
   let query = supabase
     .from("leads")
     .select(
-      "id, agent_id, name, mobile_number, email, product_pitched, value, lead_status, quote_shared, converted, policy_start_date, policy_end_date, created_at, updated_at"
+      "id, agent_id, name, mobile_number, email, product_pitched, value, status_id, status:lead_statuses(*), converted, converted_at, policy_start_date, policy_end_date, next_follow_up_date, proposal_amount, proposal_sent_date, proposal_notes, created_at, updated_at"
     )
     .order("created_at", { ascending: false });
 
@@ -27,7 +28,7 @@ export default async function AdminLeadsPage({
     query = query.eq("agent_id", searchParams.agent);
   }
   if (searchParams.status) {
-    query = query.eq("lead_status", searchParams.status as LeadStatus);
+    query = query.eq("status_id", searchParams.status);
   }
   if (searchParams.product) {
     query = query.eq("product_pitched", searchParams.product);
@@ -38,16 +39,23 @@ export default async function AdminLeadsPage({
   if (searchParams.to) {
     query = query.lte("created_at", `${searchParams.to}T23:59:59`);
   }
+  if (searchParams.followup) {
+    const date =
+      searchParams.followup === "today"
+        ? new Date().toISOString().slice(0, 10)
+        : searchParams.followup;
+    query = query.eq("next_follow_up_date", date);
+  }
 
-  const [{ data: leads }, { data: productRows }, { data: agents }] =
+  const [{ data: leads }, { data: productRows }, { data: agents }, { data: statuses }] =
     await Promise.all([
       query,
       supabase.from("leads").select("product_pitched"),
+      supabase.from("users").select("id, name").eq("role", "agent").order("name"),
       supabase
-        .from("users")
-        .select("id, name")
-        .eq("role", "agent")
-        .order("name"),
+        .from("lead_statuses")
+        .select("id, name, color, sort_order, is_won, is_lost")
+        .order("sort_order"),
     ]);
 
   const products = Array.from(
@@ -60,7 +68,7 @@ export default async function AdminLeadsPage({
 
   return (
     <div className="space-y-6">
-      <LeadsFilters products={products} agents={agents ?? []} />
+      <LeadsFilters products={products} agents={agents ?? []} statuses={statuses ?? []} />
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
@@ -68,7 +76,7 @@ export default async function AdminLeadsPage({
         </p>
       </div>
 
-      <AdminLeadsTable leads={(leads ?? []) as Lead[]} agents={agents ?? []} />
+      <AdminLeadsTable leads={(leads ?? []) as unknown as Lead[]} agents={agents ?? []} />
     </div>
   );
 }

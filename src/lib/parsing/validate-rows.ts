@@ -1,4 +1,4 @@
-import { bulkLeadRowSchema, type BulkLeadRow } from "@/lib/validations/lead";
+import { makeBulkLeadRowSchema, type BulkLeadRow } from "@/lib/validations/lead";
 import type { LeadField, ParsedFile } from "./parse-file";
 
 export type ColumnMapping = Record<LeadField, string>;
@@ -27,8 +27,10 @@ export type RowResult =
 export function buildRowResults(
   parsedFile: ParsedFile,
   mapping: ColumnMapping,
-  existingMobileNumbers: Set<string>
+  existingMobileNumbers: Set<string>,
+  validStatusNames: string[]
 ): RowResult[] {
+  const bulkLeadRowSchema = makeBulkLeadRowSchema(validStatusNames);
   const seenInFile = new Map<string, number>();
   const results: RowResult[] = [];
 

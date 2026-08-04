@@ -2,19 +2,19 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Mail, Calendar, Pencil, X, Loader2 } from "lucide-react";
-import type { Lead } from "@/types";
-import { LEAD_STATUSES } from "@/types";
+import { Phone, Mail, Calendar, Pencil, X, Loader2, CalendarClock, FileText } from "lucide-react";
+import type { Lead, LeadStatusOption } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { updateLead } from "@/lib/actions/leads";
 
-export function LeadInfoCard({ lead }: { lead: Lead }) {
+export function LeadInfoCard({ lead, statuses }: { lead: Lead; statuses: LeadStatusOption[] }) {
   const router = useRouter();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -58,7 +58,7 @@ export function LeadInfoCard({ lead }: { lead: Lead }) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <LeadStatusBadge status={lead.lead_status} />
+              <LeadStatusBadge status={lead.status} />
               <Button
                 type="button"
                 variant="secondary"
@@ -97,6 +97,15 @@ export function LeadInfoCard({ lead }: { lead: Lead }) {
                 {formatDate(lead.created_at)}
               </dd>
             </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Next follow-up
+              </dt>
+              <dd className="mt-1 flex items-center gap-1 text-sm text-slate-900">
+                <CalendarClock className="h-3.5 w-3.5 text-slate-400" />
+                {lead.next_follow_up_date ? formatDate(lead.next_follow_up_date) : "Not set"}
+              </dd>
+            </div>
             {lead.policy_start_date && (
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -118,6 +127,45 @@ export function LeadInfoCard({ lead }: { lead: Lead }) {
               </div>
             )}
           </dl>
+
+          <div className="border-t border-slate-100 pt-6">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+              <FileText className="h-4 w-4 text-slate-400" />
+              Proposal
+            </h3>
+            {lead.proposal_amount === null && !lead.proposal_sent_date && !lead.proposal_notes ? (
+              <p className="mt-2 text-sm text-slate-500">No proposal recorded yet.</p>
+            ) : (
+              <dl className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Amount
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-900">
+                    {lead.proposal_amount !== null ? formatCurrency(lead.proposal_amount) : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Sent
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-900">
+                    {lead.proposal_sent_date ? formatDate(lead.proposal_sent_date) : "—"}
+                  </dd>
+                </div>
+                {lead.proposal_notes && (
+                  <div className="sm:col-span-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      Notes
+                    </dt>
+                    <dd className="mt-1 whitespace-pre-wrap text-sm text-slate-900">
+                      {lead.proposal_notes}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
@@ -180,19 +228,28 @@ export function LeadInfoCard({ lead }: { lead: Lead }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="lead_status">Status</Label>
+              <Label htmlFor="status_id">Status</Label>
               <Select
-                id="lead_status"
-                name="lead_status"
-                defaultValue={lead.lead_status}
+                id="status_id"
+                name="status_id"
+                defaultValue={lead.status_id}
                 required
               >
-                {LEAD_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
+                {statuses.map((status) => (
+                  <option key={status.id} value={status.id}>
+                    {status.name}
                   </option>
                 ))}
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="next_follow_up_date">Next follow-up</Label>
+              <Input
+                id="next_follow_up_date"
+                name="next_follow_up_date"
+                type="date"
+                defaultValue={lead.next_follow_up_date ?? ""}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="policy_start_date">Policy start</Label>
@@ -211,6 +268,44 @@ export function LeadInfoCard({ lead }: { lead: Lead }) {
                 type="date"
                 defaultValue={lead.policy_end_date ?? ""}
               />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-5">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+              <FileText className="h-4 w-4 text-slate-400" />
+              Proposal
+            </h3>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="proposal_amount">Proposal amount</Label>
+                <Input
+                  id="proposal_amount"
+                  name="proposal_amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={lead.proposal_amount ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="proposal_sent_date">Sent date</Label>
+                <Input
+                  id="proposal_sent_date"
+                  name="proposal_sent_date"
+                  type="date"
+                  defaultValue={lead.proposal_sent_date ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="proposal_notes">Proposal notes</Label>
+                <Textarea
+                  id="proposal_notes"
+                  name="proposal_notes"
+                  rows={3}
+                  defaultValue={lead.proposal_notes ?? ""}
+                />
+              </div>
             </div>
           </div>
 

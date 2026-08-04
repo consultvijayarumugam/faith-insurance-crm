@@ -1,15 +1,7 @@
-import type { CallType, LeadStatus, UserRole } from "./database.types";
+import type { CallType, UserRole } from "./database.types";
 
-export type { UserRole, LeadStatus, CallType } from "./database.types";
+export type { UserRole, CallType } from "./database.types";
 export type { Database } from "./database.types";
-
-export const LEAD_STATUSES: LeadStatus[] = [
-  "New",
-  "Contacted",
-  "Quote Shared",
-  "Converted",
-  "Lost",
-];
 
 export const CALL_TYPES: CallType[] = [
   "Inbound Call",
@@ -25,6 +17,16 @@ export interface UserProfile {
   name: string;
   email: string;
   role: UserRole;
+  birthday: string | null;
+}
+
+export interface LeadStatusOption {
+  id: string;
+  name: string;
+  color: string;
+  sort_order: number;
+  is_won: boolean;
+  is_lost: boolean;
 }
 
 export interface Lead {
@@ -35,11 +37,16 @@ export interface Lead {
   email: string | null;
   product_pitched: string | null;
   value: number;
-  lead_status: LeadStatus;
-  quote_shared: boolean;
+  status_id: string;
+  status: LeadStatusOption;
   converted: boolean;
+  converted_at: string | null;
   policy_start_date: string | null;
   policy_end_date: string | null;
+  next_follow_up_date: string | null;
+  proposal_amount: number | null;
+  proposal_sent_date: string | null;
+  proposal_notes: string | null;
   created_at: string;
   updated_at: string;
 }

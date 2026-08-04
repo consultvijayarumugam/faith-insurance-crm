@@ -1,22 +1,33 @@
 import Link from "next/link";
-import { Contact, CheckCircle2, Wallet, ArrowRight } from "lucide-react";
+import { Contact, CheckCircle2, Wallet, ArrowRight, Phone, CalendarClock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/ui/stat-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
 
 export default async function AgentDashboardPage() {
   const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
 
-  // RLS scopes this to the signed-in agent's own leads automatically.
-  const { data: leads } = await supabase
-    .from("leads")
-    .select("lead_status, converted, value");
+  // RLS scopes both queries to the signed-in agent's own leads automatically.
+  const [{ data: leads }, { data: followUps }] = await Promise.all([
+    supabase.from("leads").select("status:lead_statuses(is_won, is_lost), converted, value"),
+    supabase
+      .from("leads")
+      .select("id, name, mobile_number")
+      .eq("next_follow_up_date", today)
+      .order("name"),
+  ]);
 
-  const rows = leads ?? [];
+  const rows = (leads ?? []) as unknown as {
+    status: { is_won: boolean; is_lost: boolean } | null;
+    converted: boolean;
+    value: number;
+  }[];
   const totalLeads = rows.length;
   const convertedCount = rows.filter((l) => l.converted).length;
   const pipelineValue = rows
-    .filter((l) => l.lead_status !== "Converted" && l.lead_status !== "Lost")
+    .filter((l) => !l.status?.is_won && !l.status?.is_lost)
     .reduce((sum, l) => sum + Number(l.value ?? 0), 0);
 
   return (
@@ -41,6 +52,37 @@ export default async function AgentDashboardPage() {
           accent="accent"
         />
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2 space-y-0">
+          <CalendarClock className="h-4 w-4 text-slate-400" />
+          <CardTitle>Today&apos;s Follow-ups</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!followUps || followUps.length === 0 ? (
+            <p className="py-2 text-sm text-slate-500">
+              No follow-ups due today. Nice and clear.
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {followUps.map((lead) => (
+                <li key={lead.id}>
+                  <Link
+                    href={`/agent/leads/${lead.id}`}
+                    className="flex items-center justify-between py-2.5 text-sm hover:text-brand-700"
+                  >
+                    <span className="font-medium text-slate-900">{lead.name}</span>
+                    <span className="flex items-center gap-1 text-slate-400">
+                      <Phone className="h-3 w-3" />
+                      {lead.mobile_number}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Link
         href="/agent/leads"

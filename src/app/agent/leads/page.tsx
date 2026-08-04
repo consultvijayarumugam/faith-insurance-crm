@@ -1,24 +1,30 @@
 import { createClient } from "@/lib/supabase/server";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { LeadsTable } from "@/components/leads/leads-table";
-import type { Lead, LeadStatus } from "@/types";
+import type { Lead } from "@/types";
 
 export default async function AgentLeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; product?: string; from?: string; to?: string };
+  searchParams: {
+    status?: string;
+    product?: string;
+    from?: string;
+    to?: string;
+    followup?: string;
+  };
 }) {
   const supabase = await createClient();
 
   let query = supabase
     .from("leads")
     .select(
-      "id, agent_id, name, mobile_number, email, product_pitched, value, lead_status, quote_shared, converted, policy_start_date, policy_end_date, created_at, updated_at"
+      "id, agent_id, name, mobile_number, email, product_pitched, value, status_id, status:lead_statuses(*), converted, converted_at, policy_start_date, policy_end_date, next_follow_up_date, proposal_amount, proposal_sent_date, proposal_notes, created_at, updated_at"
     )
     .order("created_at", { ascending: false });
 
   if (searchParams.status) {
-    query = query.eq("lead_status", searchParams.status as LeadStatus);
+    query = query.eq("status_id", searchParams.status);
   }
   if (searchParams.product) {
     query = query.eq("product_pitched", searchParams.product);
@@ -29,10 +35,18 @@ export default async function AgentLeadsPage({
   if (searchParams.to) {
     query = query.lte("created_at", `${searchParams.to}T23:59:59`);
   }
+  if (searchParams.followup) {
+    const date =
+      searchParams.followup === "today"
+        ? new Date().toISOString().slice(0, 10)
+        : searchParams.followup;
+    query = query.eq("next_follow_up_date", date);
+  }
 
-  const [{ data: leads }, { data: productRows }] = await Promise.all([
+  const [{ data: leads }, { data: productRows }, { data: statuses }] = await Promise.all([
     query,
     supabase.from("leads").select("product_pitched"),
+    supabase.from("lead_statuses").select("id, name, color, sort_order, is_won, is_lost").order("sort_order"),
   ]);
 
   const products = Array.from(
@@ -45,7 +59,7 @@ export default async function AgentLeadsPage({
 
   return (
     <div className="space-y-6">
-      <LeadsFilters products={products} />
+      <LeadsFilters products={products} statuses={statuses ?? []} />
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
@@ -53,7 +67,7 @@ export default async function AgentLeadsPage({
         </p>
       </div>
 
-      <LeadsTable leads={(leads ?? []) as Lead[]} />
+      <LeadsTable leads={(leads ?? []) as unknown as Lead[]} />
     </div>
   );
 }

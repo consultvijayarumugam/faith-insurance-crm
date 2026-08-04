@@ -28,9 +28,14 @@ export async function updateLead(leadId: string, formData: FormData) {
       email: parsed.data.email || null,
       product_pitched: parsed.data.product_pitched || null,
       value: parsed.data.value,
-      lead_status: parsed.data.lead_status,
+      status_id: parsed.data.status_id,
       policy_start_date: parsed.data.policy_start_date || null,
       policy_end_date: parsed.data.policy_end_date || null,
+      next_follow_up_date: parsed.data.next_follow_up_date || null,
+      proposal_amount:
+        parsed.data.proposal_amount === "" ? null : Number(parsed.data.proposal_amount),
+      proposal_sent_date: parsed.data.proposal_sent_date || null,
+      proposal_notes: parsed.data.proposal_notes || null,
     })
     .eq("id", leadId)
     .select("id");
@@ -123,35 +128,40 @@ export async function bulkImportLeads(
 
   const supabase = await createClient();
 
-  const { data: agentRow } = await supabase
-    .from("users")
-    .select("id")
-    .eq("id", agentId)
-    .eq("role", "agent")
-    .maybeSingle();
+  const [{ data: agentRow }, { data: statuses }] = await Promise.all([
+    supabase.from("users").select("id").eq("id", agentId).eq("role", "agent").maybeSingle(),
+    supabase.from("lead_statuses").select("id, name, sort_order").order("sort_order"),
+  ]);
   if (!agentRow) return { error: "Selected agent not found." };
+  if (!statuses || statuses.length === 0) {
+    return { error: "No lead statuses are configured. Set one up under Lead Statuses first." };
+  }
+
+  const statusIdByName = new Map(statuses.map((s) => [s.name, s.id]));
+  const defaultStatusId = statuses[0].id;
 
   // One insert per row (not a single batched multi-row insert) so a single
   // bad row can't roll back the whole statement — every row succeeds or
   // fails independently, and callers get back exactly which rows failed
-  // and why instead of losing the entire batch.
+  // and why instead of losing the entire batch. Rows are already validated
+  // (shape + status name) by makeBulkLeadRowSchema before reaching here, so
+  // this just resolves the status name to an id and inserts.
   const settled = await Promise.allSettled(
     rows.map(async ({ sourceRowNumber, data }) => {
-      const parsed = leadUpdateSchema.safeParse(data);
-      if (!parsed.success) {
-        throw new Error(parsed.error.issues[0]?.message ?? "Invalid row");
-      }
+      const statusId = data.lead_status
+        ? (statusIdByName.get(data.lead_status) ?? defaultStatusId)
+        : defaultStatusId;
 
       const { error } = await supabase.from("leads").insert({
         agent_id: agentId,
-        name: parsed.data.name,
-        mobile_number: parsed.data.mobile_number,
-        email: parsed.data.email || null,
-        product_pitched: parsed.data.product_pitched || null,
-        value: parsed.data.value,
-        lead_status: parsed.data.lead_status,
-        policy_start_date: parsed.data.policy_start_date || null,
-        policy_end_date: parsed.data.policy_end_date || null,
+        name: data.name,
+        mobile_number: data.mobile_number,
+        email: data.email || null,
+        product_pitched: data.product_pitched || null,
+        value: data.value,
+        status_id: statusId,
+        policy_start_date: data.policy_start_date || null,
+        policy_end_date: data.policy_end_date || null,
       });
 
       if (error) throw new Error(error.message);

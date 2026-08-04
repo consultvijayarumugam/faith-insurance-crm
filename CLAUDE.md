@@ -55,7 +55,8 @@ src/
 └── middleware.ts
 
 supabase/
-└── schema.sql                 # run in Supabase SQL Editor — tables, enums, RLS
+├── schema.sql                 # fresh-install schema — run once in SQL Editor
+└── migrations/                 # numbered, one-time patches for a live DB
 ```
 
 ---
@@ -83,9 +84,20 @@ const fetchLead = async (id: string): Promise<Lead> => { ... };
   feature that relies on the client filtering rows the query itself could
   have returned unfiltered — RLS is the actual security boundary, not
   component logic.
-- `quote_shared` and `converted` on `leads` are Postgres generated columns
-  derived from `lead_status`. Never write to them directly — set
-  `lead_status` and they follow automatically.
+- Lead pipeline stages are **not** a fixed enum — they're admin-managed rows
+  in `lead_statuses` (`id, name, color, sort_order, is_won, is_lost`).
+  `leads.status_id` references it. Never hardcode a status list in app code;
+  always query `lead_statuses` (ordered by `sort_order`).
+- `leads.converted` and `leads.converted_at` are trigger-maintained (see
+  `sync_lead_converted()`), not generated columns and not directly
+  app-writable in practice — set `status_id` and they follow automatically
+  based on the target status's `is_won` flag. `quote_shared` no longer
+  exists.
+- `users.role`/`email`/`id`/`created_at` cannot be changed via a
+  self-submitted update even though `users_self_update` RLS allows a user to
+  update their own row — `protect_users_privileged_columns()` clamps those
+  columns back to their previous values for non-admins. Only `name`/
+  `birthday` are genuinely self-editable.
 
 ---
 

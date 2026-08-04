@@ -40,7 +40,13 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "result", label: "Done" },
 ];
 
-export function UploadWizard({ agents }: { agents: { id: string; name: string }[] }) {
+export function UploadWizard({
+  agents,
+  statusNames,
+}: {
+  agents: { id: string; name: string }[];
+  statusNames: string[];
+}) {
   const [step, setStep] = React.useState<Step>("file");
   const [parsing, setParsing] = React.useState(false);
   const [fileError, setFileError] = React.useState<string | null>(null);
@@ -104,7 +110,7 @@ export function UploadWizard({ agents }: { agents: { id: string; name: string }[
       existing = new Set((data ?? []).map((r) => r.mobile_number));
     }
 
-    setRowResults(buildRowResults(parsedFile, mapping, existing));
+    setRowResults(buildRowResults(parsedFile, mapping, existing, statusNames));
     setStep("preview");
   }
 
@@ -181,6 +187,7 @@ export function UploadWizard({ agents }: { agents: { id: string; name: string }[
               onChange={handleMappingChange}
               onContinue={handleMappingContinue}
               onBack={handleReset}
+              validStatusNames={statusNames}
             />
           )}
 

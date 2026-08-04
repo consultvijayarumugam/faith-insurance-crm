@@ -1,20 +1,9 @@
-import { Contact, CheckCircle2, Wallet, Users } from "lucide-react";
+import Link from "next/link";
+import { Contact, CheckCircle2, Wallet, Users, CalendarClock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatCurrency } from "@/lib/format";
 import { HorizontalBarChart, type BarDatum } from "@/components/charts/horizontal-bar-chart";
-import { LEAD_STATUSES, type LeadStatus } from "@/types";
-
-// Ordinal ramp (one hue, monotone lightness), validated with
-// `validate_palette.js --ordinal` — light end still clears 2:1 contrast on
-// white. Order follows the fixed pipeline sequence, not lead count.
-const STATUS_COLORS: Record<LeadStatus, string> = {
-  New: "#60a5fa",
-  Contacted: "#3b82f6",
-  "Quote Shared": "#2563eb",
-  Converted: "#1e40af",
-  Lost: "#172554",
-};
 
 // Nominal categories (agent names have no inherent order) → one color for
 // every bar, per the dataviz method: never re-encode rank as hue.
@@ -22,18 +11,35 @@ const AGENT_BAR_COLOR = "#2563eb";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
 
   // is_admin() lets this see every agent's leads, not just the caller's own.
-  const [{ data: leads }, { data: agents }] = await Promise.all([
-    supabase.from("leads").select("agent_id, lead_status, converted, value"),
-    supabase.from("users").select("id, name").eq("role", "agent").order("name"),
-  ]);
+  const [{ data: leads }, { data: agents }, { data: statuses }, { count: followUpCount }] =
+    await Promise.all([
+      supabase.from("leads").select("agent_id, status_id, status:lead_statuses(*), converted, value"),
+      supabase.from("users").select("id, name").eq("role", "agent").order("name"),
+      supabase
+        .from("lead_statuses")
+        .select("id, name, color, sort_order, is_won, is_lost")
+        .order("sort_order"),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("next_follow_up_date", today),
+    ]);
 
-  const rows = leads ?? [];
+  const rows = (leads ?? []) as unknown as {
+    agent_id: string;
+    status_id: string;
+    status: { name: string; is_won: boolean; is_lost: boolean } | null;
+    converted: boolean;
+    value: number;
+  }[];
+
   const totalLeads = rows.length;
   const convertedCount = rows.filter((l) => l.converted).length;
   const pipelineValue = rows
-    .filter((l) => l.lead_status !== "Converted" && l.lead_status !== "Lost")
+    .filter((l) => !l.status?.is_won && !l.status?.is_lost)
     .reduce((sum, l) => sum + Number(l.value ?? 0), 0);
 
   const agentStats = new Map(
@@ -64,29 +70,27 @@ export default async function AdminDashboardPage() {
     })
     .sort((a, b) => b.value - a.value);
 
-  const statusCounts = new Map<LeadStatus, number>(
-    LEAD_STATUSES.map((s) => [s, 0])
-  );
+  const statusCounts = new Map<string, number>();
   rows.forEach((l) => {
-    statusCounts.set(l.lead_status, (statusCounts.get(l.lead_status) ?? 0) + 1);
+    statusCounts.set(l.status_id, (statusCounts.get(l.status_id) ?? 0) + 1);
   });
 
-  const statusChartData: BarDatum[] = LEAD_STATUSES.map((status) => {
-    const count = statusCounts.get(status) ?? 0;
+  const statusChartData: BarDatum[] = (statuses ?? []).map((status) => {
+    const count = statusCounts.get(status.id) ?? 0;
     const pct = totalLeads > 0 ? Math.round((count / totalLeads) * 100) : 0;
     return {
-      key: status,
-      label: status,
+      key: status.id,
+      label: status.name,
       value: count,
       displayValue: count.toString(),
-      color: STATUS_COLORS[status],
+      color: status.color,
       detail: `${pct}% of all leads`,
     };
   });
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Total Leads"
           value={totalLeads.toString()}
@@ -111,6 +115,14 @@ export default async function AdminDashboardPage() {
           icon={Users}
           accent="brand"
         />
+        <Link href="/admin/leads?followup=today" className="block">
+          <StatCard
+            label="Follow-ups Today"
+            value={(followUpCount ?? 0).toString()}
+            icon={CalendarClock}
+            accent="rose"
+          />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

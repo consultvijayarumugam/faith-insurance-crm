@@ -2,6 +2,7 @@ import { Phone } from "lucide-react";
 import type { Lead } from "@/types";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
 import { ReassignSelect } from "@/components/leads/reassign-select";
+import { FollowUpCell, ProposalCell } from "@/components/leads/lead-table-cells";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export function AdminLeadsTable({
@@ -23,7 +24,7 @@ export function AdminLeadsTable({
     <>
       {/* Desktop table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-card md:block">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
               <th className="px-5 py-3">Lead</th>
@@ -31,6 +32,8 @@ export function AdminLeadsTable({
               <th className="px-5 py-3">Product</th>
               <th className="px-5 py-3">Value</th>
               <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3">Follow-up</th>
+              <th className="px-5 py-3">Proposal</th>
               <th className="px-5 py-3">Created</th>
             </tr>
           </thead>
@@ -58,7 +61,13 @@ export function AdminLeadsTable({
                   {formatCurrency(lead.value)}
                 </td>
                 <td className="px-5 py-3.5">
-                  <LeadStatusBadge status={lead.lead_status} />
+                  <LeadStatusBadge status={lead.status} />
+                </td>
+                <td className="px-5 py-3.5">
+                  <FollowUpCell date={lead.next_follow_up_date} />
+                </td>
+                <td className="px-5 py-3.5">
+                  <ProposalCell amount={lead.proposal_amount} sentDate={lead.proposal_sent_date} />
                 </td>
                 <td className="px-5 py-3.5 text-slate-500">
                   {formatDate(lead.created_at)}
@@ -84,7 +93,7 @@ export function AdminLeadsTable({
                   {lead.mobile_number}
                 </p>
               </div>
-              <LeadStatusBadge status={lead.lead_status} />
+              <LeadStatusBadge status={lead.status} />
             </div>
             <div className="mt-3 flex items-center justify-between text-sm">
               <span className="text-slate-500">
@@ -93,6 +102,10 @@ export function AdminLeadsTable({
               <span className="font-medium text-slate-900">
                 {formatCurrency(lead.value)}
               </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <FollowUpCell date={lead.next_follow_up_date} />
+              <ProposalCell amount={lead.proposal_amount} sentDate={lead.proposal_sent_date} />
             </div>
             <p className="mt-2 text-xs text-slate-400">
               Added {formatDate(lead.created_at)}
