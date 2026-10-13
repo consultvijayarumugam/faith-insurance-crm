@@ -4,6 +4,8 @@
 
 export type UserRole = "agent" | "admin";
 
+export type LeadFieldType = "text" | "number" | "date" | "select";
+
 export type CallType =
   | "Inbound Call"
   | "Outbound Call"
@@ -173,12 +175,81 @@ export interface Database {
           },
         ];
       };
+      lead_field_definitions: {
+        Row: {
+          id: string;
+          name: string;
+          field_type: LeadFieldType;
+          options: string[] | null;
+          is_required: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          field_type: LeadFieldType;
+          options?: string[] | null;
+          is_required?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          name?: string;
+          field_type?: LeadFieldType;
+          options?: string[] | null;
+          is_required?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      lead_field_values: {
+        Row: {
+          id: string;
+          lead_id: string;
+          field_definition_id: string;
+          value_text: string | null;
+          value_number: number | null;
+          value_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          field_definition_id: string;
+          value_text?: string | null;
+          value_number?: number | null;
+          value_date?: string | null;
+        };
+        Update: {
+          value_text?: string | null;
+          value_number?: number | null;
+          value_date?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_field_values_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_field_values_field_definition_id_fkey";
+            columns: ["field_definition_id"];
+            isOneToOne: false;
+            referencedRelation: "lead_field_definitions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       user_role: UserRole;
       call_type: CallType;
+      lead_field_type: LeadFieldType;
     };
     CompositeTypes: Record<string, never>;
   };

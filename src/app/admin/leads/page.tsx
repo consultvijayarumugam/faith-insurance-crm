@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { AdminLeadsTable } from "@/components/leads/admin-leads-table";
-import type { Lead } from "@/types";
+import type { Lead, LeadFieldDefinition } from "@/types";
 
 export default async function AdminLeadsPage({
   searchParams,
@@ -13,6 +13,8 @@ export default async function AdminLeadsPage({
     from?: string;
     to?: string;
     followup?: string;
+    cf?: string;
+    cfv?: string;
   };
 }) {
   const supabase = await createClient();
@@ -47,7 +49,26 @@ export default async function AdminLeadsPage({
     query = query.eq("next_follow_up_date", date);
   }
 
-  const [{ data: leads }, { data: productRows }, { data: agents }, { data: statuses }] =
+  // Custom-field filter: resolve matching lead ids from lead_field_values
+  // first (Supabase's query builder has no EXISTS-subquery escape hatch),
+  // then narrow the main leads query by id. A no-match filter is applied as
+  // an impossible id so the query stays a real (empty) query rather than a
+  // special-cased branch.
+  const NO_MATCH_ID = "00000000-0000-0000-0000-000000000000";
+  if (searchParams.cf) {
+    let valuesQuery = supabase
+      .from("lead_field_values")
+      .select("lead_id")
+      .eq("field_definition_id", searchParams.cf);
+    valuesQuery = searchParams.cfv
+      ? valuesQuery.eq("value_text", searchParams.cfv)
+      : valuesQuery.not("value_text", "is", null);
+    const { data: matchingValues } = await valuesQuery;
+    const ids = (matchingValues ?? []).map((v) => v.lead_id);
+    query = query.in("id", ids.length > 0 ? ids : [NO_MATCH_ID]);
+  }
+
+  const [{ data: leads }, { data: productRows }, { data: agents }, { data: statuses }, { data: fieldDefinitions }] =
     await Promise.all([
       query,
       supabase.from("leads").select("product_pitched"),
@@ -56,7 +77,12 @@ export default async function AdminLeadsPage({
         .from("lead_statuses")
         .select("id, name, color, sort_order, is_won, is_lost")
         .order("sort_order"),
+      supabase.from("lead_field_definitions").select("id, name, field_type, options, is_required, sort_order"),
     ]);
+
+  const selectFields = ((fieldDefinitions ?? []) as LeadFieldDefinition[]).filter(
+    (f) => f.field_type === "select"
+  );
 
   const products = Array.from(
     new Set(
@@ -68,7 +94,12 @@ export default async function AdminLeadsPage({
 
   return (
     <div className="space-y-6">
-      <LeadsFilters products={products} agents={agents ?? []} statuses={statuses ?? []} />
+      <LeadsFilters
+        products={products}
+        agents={agents ?? []}
+        statuses={statuses ?? []}
+        selectFields={selectFields}
+      />
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">

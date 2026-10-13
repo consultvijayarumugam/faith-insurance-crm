@@ -1,6 +1,6 @@
-import type { CallType, UserRole } from "./database.types";
+import type { CallType, LeadFieldType, UserRole } from "./database.types";
 
-export type { UserRole, CallType } from "./database.types";
+export type { UserRole, CallType, LeadFieldType } from "./database.types";
 export type { Database } from "./database.types";
 
 export const CALL_TYPES: CallType[] = [
@@ -58,4 +58,22 @@ export interface LeadNote {
   note_text: string;
   call_type: CallType | null;
   created_at: string;
+}
+
+export interface LeadFieldDefinition {
+  id: string;
+  name: string;
+  field_type: LeadFieldType;
+  options: string[] | null;
+  is_required: boolean;
+  sort_order: number;
+}
+
+export interface LeadFieldValue {
+  id: string;
+  lead_id: string;
+  field_definition_id: string;
+  value_text: string | null;
+  value_number: number | null;
+  value_date: string | null;
 }

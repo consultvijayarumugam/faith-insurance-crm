@@ -8,16 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { LeadStatusOption } from "@/types";
+import type { LeadFieldDefinition, LeadStatusOption } from "@/types";
 
 export function LeadsFilters({
   products,
   agents,
   statuses,
+  selectFields,
 }: {
   products: string[];
   agents?: { id: string; name: string }[];
   statuses: LeadStatusOption[];
+  /** Admin-defined dropdown-type custom fields, filterable one at a time. */
+  selectFields?: LeadFieldDefinition[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -29,8 +32,22 @@ export function LeadsFilters({
   const from = searchParams.get("from") ?? "";
   const to = searchParams.get("to") ?? "";
   const followup = searchParams.get("followup") ?? "";
+  const cf = searchParams.get("cf") ?? "";
+  const cfv = searchParams.get("cfv") ?? "";
 
-  const hasFilters = Boolean(agent || status || product || from || to || followup);
+  const hasFilters = Boolean(agent || status || product || from || to || followup || cf);
+  const activeField = (selectFields ?? []).find((f) => f.id === cf);
+
+  function updateCustomField(fieldId: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (fieldId) {
+      params.set("cf", fieldId);
+    } else {
+      params.delete("cf");
+    }
+    params.delete("cfv");
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -117,6 +134,43 @@ export function LeadsFilters({
             ))}
           </Select>
         </div>
+
+        {selectFields && selectFields.length > 0 && (
+          <>
+            <div className="w-44 space-y-1.5">
+              <Label htmlFor="filter-cf">Custom field</Label>
+              <Select
+                id="filter-cf"
+                value={cf}
+                onChange={(e) => updateCustomField(e.target.value)}
+              >
+                <option value="">None</option>
+                {selectFields.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {activeField && (
+              <div className="w-44 space-y-1.5">
+                <Label htmlFor="filter-cfv">{activeField.name}</Label>
+                <Select
+                  id="filter-cfv"
+                  value={cfv}
+                  onChange={(e) => updateParam("cfv", e.target.value)}
+                >
+                  <option value="">Any value</option>
+                  {(activeField.options ?? []).map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+          </>
+        )}
 
         <div className="w-40 space-y-1.5">
           <Label htmlFor="filter-from">From</Label>

@@ -6,6 +6,7 @@ import {
   UploadCloud,
   Tag,
   Award,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export interface NavItem {
@@ -28,6 +29,7 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/leads", label: "All Leads", icon: Contact },
   { href: "/admin/closed-cases", label: "Closed Cases", icon: Award },
   { href: "/admin/statuses", label: "Lead Statuses", icon: Tag },
+  { href: "/admin/custom-fields", label: "Custom Fields", icon: SlidersHorizontal },
   { href: "/admin/agents", label: "Agents", icon: Users },
   { href: "/admin/upload", label: "Bulk Upload", icon: UploadCloud },
 ];

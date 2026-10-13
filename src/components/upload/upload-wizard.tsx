@@ -15,6 +15,7 @@ import {
 import { buildRowResults, type ColumnMapping, type RowResult } from "@/lib/parsing/validate-rows";
 import { bulkImportLeads, type BulkImportResult } from "@/lib/actions/leads";
 import { MAX_BULK_IMPORT_ROWS } from "@/lib/constants";
+import type { LeadFieldDefinition } from "@/types";
 import { FileStep } from "./file-step";
 import { MappingStep } from "./mapping-step";
 import { PreviewStep } from "./preview-step";
@@ -43,15 +44,18 @@ const STEPS: { key: Step; label: string }[] = [
 export function UploadWizard({
   agents,
   statusNames,
+  fieldDefinitions = [],
 }: {
   agents: { id: string; name: string }[];
   statusNames: string[];
+  fieldDefinitions?: LeadFieldDefinition[];
 }) {
   const [step, setStep] = React.useState<Step>("file");
   const [parsing, setParsing] = React.useState(false);
   const [fileError, setFileError] = React.useState<string | null>(null);
   const [parsedFile, setParsedFile] = React.useState<ParsedFile | null>(null);
   const [mapping, setMapping] = React.useState<ColumnMapping>(EMPTY_MAPPING);
+  const [customFieldMapping, setCustomFieldMapping] = React.useState<Record<string, string>>({});
 
   const [rowResults, setRowResults] = React.useState<RowResult[]>([]);
   const [selectedAgentId, setSelectedAgentId] = React.useState("");
@@ -110,7 +114,9 @@ export function UploadWizard({
       existing = new Set((data ?? []).map((r) => r.mobile_number));
     }
 
-    setRowResults(buildRowResults(parsedFile, mapping, existing, statusNames));
+    setRowResults(
+      buildRowResults(parsedFile, mapping, existing, statusNames, customFieldMapping)
+    );
     setStep("preview");
   }
 
@@ -123,7 +129,11 @@ export function UploadWizard({
         (r): r is Extract<RowResult, { status: "valid" }> =>
           r.status === "valid" && (!r.isDuplicate || includeDuplicates)
       )
-      .map((r) => ({ sourceRowNumber: r.rowNumber, data: r.data }));
+      .map((r) => ({
+        sourceRowNumber: r.rowNumber,
+        data: r.data,
+        customFieldValues: r.customFieldValues,
+      }));
 
     const result = await bulkImportLeads(selectedAgentId, payload);
 
@@ -142,6 +152,7 @@ export function UploadWizard({
     setFileError(null);
     setParsedFile(null);
     setMapping(EMPTY_MAPPING);
+    setCustomFieldMapping({});
     setRowResults([]);
     setSelectedAgentId("");
     setIncludeDuplicates(false);
@@ -188,6 +199,11 @@ export function UploadWizard({
               onContinue={handleMappingContinue}
               onBack={handleReset}
               validStatusNames={statusNames}
+              fieldDefinitions={fieldDefinitions}
+              customFieldMapping={customFieldMapping}
+              onCustomFieldChange={(fieldId, column) =>
+                setCustomFieldMapping((prev) => ({ ...prev, [fieldId]: column }))
+              }
             />
           )}
 

@@ -105,6 +105,11 @@ export async function reassignLead(leadId: string, newAgentId: string) {
 export interface BulkImportRowInput {
   sourceRowNumber: number;
   data: BulkLeadRow;
+  /** Raw cell text per custom field definition id, from the upload wizard's
+   * optional custom-field mapping section. Coerced/validated per the
+   * field's type here, at insert time; a value that doesn't fit its type is
+   * silently skipped rather than failing the whole row. */
+  customFieldValues?: Record<string, string>;
 }
 
 export interface BulkImportResult {
@@ -128,9 +133,12 @@ export async function bulkImportLeads(
 
   const supabase = await createClient();
 
-  const [{ data: agentRow }, { data: statuses }] = await Promise.all([
+  const [{ data: agentRow }, { data: statuses }, { data: fieldDefinitions }] = await Promise.all([
     supabase.from("users").select("id").eq("id", agentId).eq("role", "agent").maybeSingle(),
     supabase.from("lead_statuses").select("id, name, sort_order").order("sort_order"),
+    supabase
+      .from("lead_field_definitions")
+      .select("id, name, field_type, options, is_required, sort_order"),
   ]);
   if (!agentRow) return { error: "Selected agent not found." };
   if (!statuses || statuses.length === 0) {
@@ -139,6 +147,7 @@ export async function bulkImportLeads(
 
   const statusIdByName = new Map(statuses.map((s) => [s.name, s.id]));
   const defaultStatusId = statuses[0].id;
+  const fieldDefinitionById = new Map((fieldDefinitions ?? []).map((f) => [f.id, f]));
 
   // One insert per row (not a single batched multi-row insert) so a single
   // bad row can't roll back the whole statement — every row succeeds or
@@ -147,24 +156,56 @@ export async function bulkImportLeads(
   // (shape + status name) by makeBulkLeadRowSchema before reaching here, so
   // this just resolves the status name to an id and inserts.
   const settled = await Promise.allSettled(
-    rows.map(async ({ sourceRowNumber, data }) => {
+    rows.map(async ({ sourceRowNumber, data, customFieldValues }) => {
       const statusId = data.lead_status
         ? (statusIdByName.get(data.lead_status) ?? defaultStatusId)
         : defaultStatusId;
 
-      const { error } = await supabase.from("leads").insert({
-        agent_id: agentId,
-        name: data.name,
-        mobile_number: data.mobile_number,
-        email: data.email || null,
-        product_pitched: data.product_pitched || null,
-        value: data.value,
-        status_id: statusId,
-        policy_start_date: data.policy_start_date || null,
-        policy_end_date: data.policy_end_date || null,
-      });
+      const { data: inserted, error } = await supabase
+        .from("leads")
+        .insert({
+          agent_id: agentId,
+          name: data.name,
+          mobile_number: data.mobile_number,
+          email: data.email || null,
+          product_pitched: data.product_pitched || null,
+          value: data.value,
+          status_id: statusId,
+          policy_start_date: data.policy_start_date || null,
+          policy_end_date: data.policy_end_date || null,
+        })
+        .select("id")
+        .single();
 
       if (error) throw new Error(error.message);
+
+      // Best-effort: a custom field value that doesn't fit its definition's
+      // type is skipped, never allowed to undo the lead that was just
+      // created. Mapping columns is optional, so most imports skip this.
+      if (customFieldValues && Object.keys(customFieldValues).length > 0) {
+        const valueRows = Object.entries(customFieldValues)
+          .map(([fieldId, raw]) => {
+            const def = fieldDefinitionById.get(fieldId);
+            if (!def) return null;
+            const trimmed = raw.trim();
+            if (def.field_type === "number" && Number.isNaN(Number(trimmed))) return null;
+            if (def.field_type === "date" && Number.isNaN(Date.parse(trimmed))) return null;
+            if (def.field_type === "select" && !(def.options ?? []).includes(trimmed)) return null;
+            return {
+              lead_id: inserted.id,
+              field_definition_id: fieldId,
+              value_text: def.field_type === "text" || def.field_type === "select" ? trimmed : null,
+              value_number: def.field_type === "number" ? Number(trimmed) : null,
+              value_date: def.field_type === "date" ? trimmed : null,
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+
+        if (valueRows.length > 0) {
+          await supabase.from("lead_field_values").insert(valueRows);
+        }
+      }
+
       return sourceRowNumber;
     })
   );

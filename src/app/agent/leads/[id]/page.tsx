@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LeadInfoCard } from "@/components/leads/lead-info-card";
 import { NotesTimeline, type TimelineNote } from "@/components/leads/notes-timeline";
 import { AddNoteForm } from "@/components/leads/add-note-form";
-import type { Lead } from "@/types";
+import { CustomFieldsCard } from "@/components/leads/custom-fields-card";
+import type { Lead, LeadFieldDefinition, LeadFieldValue } from "@/types";
 
 export default async function AgentLeadDetailPage({
   params,
@@ -26,11 +27,22 @@ export default async function AgentLeadDetailPage({
 
   if (!lead) notFound();
 
-  const { data: notesData } = await supabase
-    .from("lead_notes")
-    .select("id, note_text, call_type, created_at, agent_id")
-    .eq("lead_id", params.id)
-    .order("created_at", { ascending: false });
+  const [{ data: notesData }, { data: fieldDefinitions }, { data: fieldValues }] =
+    await Promise.all([
+      supabase
+        .from("lead_notes")
+        .select("id, note_text, call_type, created_at, agent_id")
+        .eq("lead_id", params.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("lead_field_definitions")
+        .select("id, name, field_type, options, is_required, sort_order")
+        .order("sort_order"),
+      supabase
+        .from("lead_field_values")
+        .select("id, lead_id, field_definition_id, value_text, value_number, value_date")
+        .eq("lead_id", params.id),
+    ]);
 
   const notes = notesData ?? [];
   const authorIds = Array.from(
@@ -65,6 +77,12 @@ export default async function AgentLeadDetailPage({
       </Link>
 
       <LeadInfoCard lead={lead as unknown as Lead} statuses={statuses ?? []} />
+
+      <CustomFieldsCard
+        leadId={params.id}
+        definitions={(fieldDefinitions ?? []) as LeadFieldDefinition[]}
+        values={(fieldValues ?? []) as LeadFieldValue[]}
+      />
 
       <Card>
         <CardContent className="space-y-6">

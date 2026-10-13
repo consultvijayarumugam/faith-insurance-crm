@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import type { LeadField } from "@/lib/parsing/parse-file";
 import { REQUIRED_MAPPING_FIELDS, type ColumnMapping } from "@/lib/parsing/validate-rows";
+import type { LeadFieldDefinition } from "@/types";
 
 const FIELD_LABELS: Record<LeadField, string> = {
   name: "Lead name",
@@ -38,6 +39,9 @@ export function MappingStep({
   onContinue,
   onBack,
   validStatusNames,
+  fieldDefinitions = [],
+  customFieldMapping = {},
+  onCustomFieldChange,
 }: {
   headers: string[];
   rowCount: number;
@@ -46,6 +50,9 @@ export function MappingStep({
   onContinue: () => void;
   onBack: () => void;
   validStatusNames: string[];
+  fieldDefinitions?: LeadFieldDefinition[];
+  customFieldMapping?: Record<string, string>;
+  onCustomFieldChange?: (fieldId: string, column: string) => void;
 }) {
   const missingRequired = REQUIRED_MAPPING_FIELDS.filter((f) => !mapping[f]);
   const canContinue = missingRequired.length === 0;
@@ -91,6 +98,33 @@ export function MappingStep({
           );
         })}
       </div>
+
+      {fieldDefinitions.length > 0 && onCustomFieldChange && (
+        <div className="space-y-4 border-t border-slate-100 pt-5">
+          <p className="text-sm font-medium text-slate-700">
+            Custom fields <span className="text-slate-400">(optional)</span>
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {fieldDefinitions.map((def) => (
+              <div key={def.id} className="space-y-1.5">
+                <Label htmlFor={`map-cf-${def.id}`}>{def.name}</Label>
+                <Select
+                  id={`map-cf-${def.id}`}
+                  value={customFieldMapping[def.id] ?? ""}
+                  onChange={(e) => onCustomFieldChange(def.id, e.target.value)}
+                >
+                  <option value="">Not mapped</option>
+                  {headers.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 border-t border-slate-100 pt-5">
         <Button type="button" variant="ghost" onClick={onBack}>

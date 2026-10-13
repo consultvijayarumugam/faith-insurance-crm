@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Phone } from "lucide-react";
 import type { Lead } from "@/types";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
@@ -40,12 +41,14 @@ export function AdminLeadsTable({
           <tbody>
             {leads.map((lead) => (
               <tr key={lead.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-5 py-3.5">
-                  <p className="font-medium text-slate-900">{lead.name}</p>
-                  <p className="flex items-center gap-1 text-xs text-slate-400">
-                    <Phone className="h-3 w-3" />
-                    {lead.mobile_number}
-                  </p>
+                <td className="p-0">
+                  <Link href={`/admin/leads/${lead.id}`} className="block px-5 py-3.5">
+                    <p className="font-medium text-slate-900">{lead.name}</p>
+                    <p className="flex items-center gap-1 text-xs text-slate-400">
+                      <Phone className="h-3 w-3" />
+                      {lead.mobile_number}
+                    </p>
+                  </Link>
                 </td>
                 <td className="px-5 py-3.5">
                   <ReassignSelect
@@ -86,13 +89,13 @@ export function AdminLeadsTable({
             className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card"
           >
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <Link href={`/admin/leads/${lead.id}`} className="block">
                 <p className="font-medium text-slate-900">{lead.name}</p>
                 <p className="flex items-center gap-1 text-xs text-slate-400">
                   <Phone className="h-3 w-3" />
                   {lead.mobile_number}
                 </p>
-              </div>
+              </Link>
               <LeadStatusBadge status={lead.status} />
             </div>
             <div className="mt-3 flex items-center justify-between text-sm">

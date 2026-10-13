@@ -12,6 +12,11 @@ export type RowResult =
       data: BulkLeadRow;
       isDuplicate: boolean;
       duplicateReason?: string;
+      /** Raw cell text per custom field definition id, unvalidated here —
+       * bulkImportLeads coerces/validates per field_type at insert time and
+       * silently skips a value that doesn't fit, rather than failing the
+       * whole row over a secondary field. */
+      customFieldValues?: Record<string, string>;
     }
   | {
       status: "invalid";
@@ -28,7 +33,8 @@ export function buildRowResults(
   parsedFile: ParsedFile,
   mapping: ColumnMapping,
   existingMobileNumbers: Set<string>,
-  validStatusNames: string[]
+  validStatusNames: string[],
+  customFieldMapping: Record<string, string> = {}
 ): RowResult[] {
   const bulkLeadRowSchema = makeBulkLeadRowSchema(validStatusNames);
   const seenInFile = new Map<string, number>();
@@ -82,12 +88,18 @@ export function buildRowResults(
       seenInFile.set(mobile, rowNumber);
     }
 
+    const customFieldValues: Record<string, string> = {};
+    Object.entries(customFieldMapping).forEach(([fieldId, column]) => {
+      if (column && row[column]) customFieldValues[fieldId] = row[column];
+    });
+
     results.push({
       status: "valid",
       rowNumber,
       data: parsed.data,
       isDuplicate,
       duplicateReason,
+      customFieldValues: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
     });
   });
 
