@@ -8,8 +8,15 @@ import type { RetentionSetting } from "@/types";
 // session at all. The actual delete-or-not decision and the service-role-
 // only enforcement live in run_retention_cleanup() itself (0012).
 export async function GET(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  // Guard against the literal string "Bearer undefined" ever matching if
+  // the env var isn't set in this deployment — fail closed, not open.
+  if (!cronSecret) {
+    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
+  }
+
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
