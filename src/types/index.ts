@@ -109,6 +109,10 @@ export interface CallLog {
   disposition_name?: string;
 }
 
+export interface PerformanceThreshold {
+  min_calls_per_week: number;
+}
+
 export interface LeadFollowUp {
   id: string;
   lead_id: string;

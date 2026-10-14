@@ -396,6 +396,21 @@ export interface Database {
           },
         ];
       };
+      app_settings: {
+        Row: {
+          key: string;
+          value: Record<string, unknown>;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: Record<string, unknown>;
+        };
+        Update: {
+          value?: Record<string, unknown>;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

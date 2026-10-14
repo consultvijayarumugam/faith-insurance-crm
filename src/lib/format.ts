@@ -21,6 +21,14 @@ export function formatMonthLabel(value: string) {
   );
 }
 
+export function formatDurationHuman(totalSeconds: number) {
+  const totalMinutes = Math.round(totalSeconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
+}
+
 export function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
