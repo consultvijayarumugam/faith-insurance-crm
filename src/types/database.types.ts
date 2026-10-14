@@ -513,12 +513,34 @@ export interface Database {
           },
         ];
       };
+      retention_log: {
+        Row: {
+          id: string;
+          run_at: string;
+          mode: "dry_run" | "live";
+          triggered_by: "cron" | "manual";
+          counts: Record<string, number>;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       find_lead_by_mobile: {
         Args: { p_mobile: string };
         Returns: { lead_name: string; owner_name: string }[];
+      };
+      run_retention_cleanup: {
+        Args: {
+          p_years: number;
+          p_dry_run: boolean;
+          p_triggered_by?: string;
+          p_batch_size?: number;
+        };
+        Returns: Record<string, number>;
       };
     };
     Enums: {

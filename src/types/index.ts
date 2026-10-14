@@ -158,6 +158,19 @@ export interface AttendanceLocationSetting {
   require_location_for_punch: boolean;
 }
 
+export interface RetentionSetting {
+  years: 1 | 2 | 3;
+  dry_run: boolean;
+}
+
+export interface RetentionLog {
+  id: string;
+  run_at: string;
+  mode: "dry_run" | "live";
+  triggered_by: "cron" | "manual";
+  counts: Record<string, number>;
+}
+
 export interface AttendanceCorrection {
   id: string;
   agent_id: string;

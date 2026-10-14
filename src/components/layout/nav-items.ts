@@ -12,6 +12,7 @@ import {
   PhoneCall,
   BarChart3,
   Clock,
+  Settings,
 } from "lucide-react";
 
 export interface NavItem {
@@ -44,6 +45,7 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/attendance", label: "Attendance", icon: Clock },
   { href: "/admin/agents", label: "Agents", icon: Users },
   { href: "/admin/upload", label: "Bulk Upload", icon: UploadCloud },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export type Role = "agent" | "admin";
