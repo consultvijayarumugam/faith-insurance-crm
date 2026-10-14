@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -72,8 +73,12 @@ export function ResetPasswordForm() {
       return;
     }
 
-    // Middleware routes to /agent/dashboard or /admin/dashboard based on role.
-    router.replace("/");
+    // The recovery link signs the browser into a real (if short-lived)
+    // session — sign it out explicitly so the user lands back on login and
+    // has to use the new password, rather than being dropped straight into
+    // their dashboard.
+    await supabase.auth.signOut();
+    router.replace("/login?reset=success");
     router.refresh();
   }
 
@@ -87,10 +92,17 @@ export function ResetPasswordForm() {
 
   if (status === "invalid") {
     return (
-      <Alert variant="error">
-        This reset link is invalid or has expired. Go back to the login page
-        and request a new one.
-      </Alert>
+      <div className="space-y-4">
+        <Alert variant="error">
+          This reset link is invalid or has expired.
+        </Alert>
+        <Link
+          href="/forgot-password"
+          className="block text-center text-sm font-medium text-brand-700 hover:text-brand-800"
+        >
+          Request a new reset link
+        </Link>
+      </div>
     );
   }
 

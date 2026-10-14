@@ -1,24 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
-import { forgotPasswordSchema } from "@/lib/validations/auth";
 
 export function LoginForm() {
   const router = useRouter();
-  const [mode, setMode] = React.useState<"login" | "forgot">("login");
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
-  const [resetSent, setResetSent] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,81 +42,11 @@ export function LoginForm() {
     router.refresh();
   }
 
-  async function handleForgotPassword(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    const parsed = forgotPasswordSchema.safeParse({ email });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Invalid email");
-      return;
-    }
-
-    setLoading(true);
-    const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      parsed.data.email,
-      { redirectTo: `${window.location.origin}/reset-password` }
-    );
-    setLoading(false);
-
-    // Supabase returns success regardless of whether the email matches an
-    // account, so there's nothing account-specific to branch on here.
-    if (resetError) {
-      setError(resetError.message);
-      return;
-    }
-    setResetSent(true);
-  }
-
-  if (mode === "forgot") {
-    return (
-      <form onSubmit={handleForgotPassword} className="space-y-5" noValidate>
-        {error && <Alert variant="error">{error}</Alert>}
-        {resetSent ? (
-          <Alert variant="success">
-            If an account exists for {email}, a reset link has been sent.
-          </Alert>
-        ) : (
-          <div className="space-y-2">
-            <Label htmlFor="forgot-email">Email</Label>
-            <Input
-              id="forgot-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@faithinsurance.com"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        )}
-
-        {!resetSent && (
-          <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Sending…" : "Send reset link"}
-          </Button>
-        )}
-
-        <button
-          type="button"
-          onClick={() => {
-            setMode("login");
-            setError(null);
-            setResetSent(false);
-          }}
-          className="w-full text-center text-sm font-medium text-slate-500 hover:text-slate-900"
-        >
-          Back to sign in
-        </button>
-      </form>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      {resetSuccess && (
+        <Alert variant="success">Your password has been updated. Sign in below.</Alert>
+      )}
       {error && (
         <div
           role="alert"
@@ -143,16 +73,12 @@ export function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("forgot");
-              setError(null);
-            }}
+          <Link
+            href="/forgot-password"
             className="text-xs font-medium text-brand-700 hover:text-brand-800"
           >
             Forgot password?
-          </button>
+          </Link>
         </div>
         <div className="relative">
           <Input

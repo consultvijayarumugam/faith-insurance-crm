@@ -1,5 +1,6 @@
 import { Mail } from "lucide-react";
 import { formatDate } from "@/lib/format";
+import { ResetPasswordButton } from "@/components/agents/reset-password-button";
 
 export interface AgentRow {
   id: string;
@@ -29,6 +30,7 @@ export function AgentsList({ agents }: { agents: AgentRow[] }) {
               <th className="px-5 py-3">Name</th>
               <th className="px-5 py-3">Email</th>
               <th className="px-5 py-3">Joined</th>
+              <th className="px-5 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -38,6 +40,9 @@ export function AgentsList({ agents }: { agents: AgentRow[] }) {
                 <td className="px-5 py-3.5 text-slate-600">{agent.email}</td>
                 <td className="px-5 py-3.5 text-slate-500">
                   {formatDate(agent.created_at)}
+                </td>
+                <td className="px-5 py-3.5">
+                  <ResetPasswordButton agentId={agent.id} agentName={agent.name} />
                 </td>
               </tr>
             ))}
@@ -60,6 +65,9 @@ export function AgentsList({ agents }: { agents: AgentRow[] }) {
             <p className="mt-2 text-xs text-slate-400">
               Joined {formatDate(agent.created_at)}
             </p>
+            <div className="mt-3">
+              <ResetPasswordButton agentId={agent.id} agentName={agent.name} />
+            </div>
           </div>
         ))}
       </div>

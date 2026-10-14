@@ -1,12 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// /forgot-password and /reset-password must stay reachable with no session
+// (requesting a link) and reachable with the temporary session a recovery
+// link creates (setting a new password) — so they're never redirected to
+// /login, and (unlike /login) an existing session doesn't bounce away from
+// them either.
+const PUBLIC_AUTH_ROUTES = ["/forgot-password", "/reset-password"];
+
 /**
  * Refreshes the Supabase auth session on every request and enforces
  * route-level access:
  *  - unauthenticated users are bounced to /login from any protected route
  *  - authenticated users are bounced away from /login to their dashboard
  *  - /admin/** requires role = admin; /agent/** requires role = agent
+ *  - /forgot-password and /reset-password are always public (see above)
  *
  * This is a coarse UX guard only. The real enforcement is Postgres RLS
  * (see supabase/schema.sql) — every data query is still scoped server-side
@@ -41,8 +49,10 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+  const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.includes(path);
   const isAuthRoute = path === "/login";
-  const isProtectedRoute = path.startsWith("/agent") || path.startsWith("/admin");
+  const isProtectedRoute =
+    (path.startsWith("/agent") || path.startsWith("/admin")) && !isPublicAuthRoute;
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();

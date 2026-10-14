@@ -1,7 +1,25 @@
-import type { CallLogSource, CallType, LeadFieldType, LeadFollowUpStatus, UserRole } from "./database.types";
+import type {
+  CallLogSource,
+  CallType,
+  LeadFieldType,
+  LeadFollowUpStatus,
+  UserRole,
+} from "./database.types";
 
-export type { UserRole, CallType, LeadFieldType, LeadFollowUpStatus, CallLogSource } from "./database.types";
+export type {
+  UserRole,
+  CallType,
+  LeadFieldType,
+  LeadFollowUpStatus,
+  CallLogSource,
+} from "./database.types";
 export type { Database } from "./database.types";
+
+export interface TempPasswordResult {
+  name: string;
+  email: string;
+  tempPassword: string;
+}
 
 export const CALL_TYPES: CallType[] = [
   "Inbound Call",

@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, Loader2, Copy, Check } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
-import { inviteAgent, type InviteAgentResult } from "@/lib/actions/agents";
+import { TempPasswordReveal } from "@/components/agents/temp-password-reveal";
+import { inviteAgent } from "@/lib/actions/agents";
+import type { TempPasswordResult } from "@/types";
 
 export function InviteAgentForm() {
   const router = useRouter();
@@ -16,8 +18,7 @@ export function InviteAgentForm() {
   const [open, setOpen] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [result, setResult] = React.useState<InviteAgentResult | null>(null);
-  const [copied, setCopied] = React.useState(false);
+  const [result, setResult] = React.useState<TempPasswordResult | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,52 +41,17 @@ export function InviteAgentForm() {
   function handleDone() {
     setResult(null);
     setOpen(false);
-    setCopied(false);
-  }
-
-  async function handleCopy() {
-    if (!result) return;
-    await navigator.clipboard.writeText(
-      `Email: ${result.email}\nTemporary password: ${result.tempPassword}`
-    );
-    setCopied(true);
   }
 
   if (result) {
     return (
       <Card>
-        <CardContent className="space-y-4">
-          <Alert variant="success">
-            Agent account created for {result.name}.
-          </Alert>
-
-          <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
-            <p>
-              <span className="text-slate-500">Email: </span>
-              <span className="font-medium text-slate-900">{result.email}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Temporary password: </span>
-              <span className="font-mono font-medium text-slate-900">
-                {result.tempPassword}
-              </span>
-            </p>
-          </div>
-
-          <Alert variant="warning">
-            This password won&apos;t be shown again. Share it with{" "}
-            {result.name} securely — they can sign in with it right away.
-          </Alert>
-
-          <div className="flex gap-2">
-            <Button type="button" onClick={handleCopy}>
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied" : "Copy credentials"}
-            </Button>
-            <Button type="button" variant="ghost" onClick={handleDone}>
-              Done
-            </Button>
-          </div>
+        <CardContent>
+          <TempPasswordReveal
+            result={result}
+            heading={`Agent account created for ${result.name}.`}
+            onDone={handleDone}
+          />
         </CardContent>
       </Card>
     );

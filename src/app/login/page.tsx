@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ShieldCheck, TrendingUp, Users } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 
@@ -64,7 +65,9 @@ export default function LoginPage() {
               Sign in with the email and password your admin gave you.
             </p>
           </div>
-          <LoginForm />
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </div>
