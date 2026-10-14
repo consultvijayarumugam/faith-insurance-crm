@@ -8,6 +8,8 @@ export type LeadFieldType = "text" | "number" | "date" | "select";
 
 export type LeadFollowUpStatus = "pending" | "done" | "missed";
 
+export type CallLogSource = "web" | "mobile";
+
 export type CallType =
   | "Inbound Call"
   | "Outbound Call"
@@ -331,6 +333,69 @@ export interface Database {
           },
         ];
       };
+      call_dispositions: {
+        Row: {
+          id: string;
+          name: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          sort_order?: number;
+        };
+        Update: {
+          name?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      call_logs: {
+        Row: {
+          id: string;
+          lead_id: string;
+          agent_id: string;
+          disposition_id: string;
+          duration_seconds: number;
+          notes: string | null;
+          source: CallLogSource;
+          started_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          agent_id: string;
+          disposition_id: string;
+          duration_seconds?: number;
+          notes?: string | null;
+          source?: CallLogSource;
+          started_at?: string;
+        };
+        Update: {
+          disposition_id?: string;
+          duration_seconds?: number;
+          notes?: string | null;
+          started_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_logs_disposition_id_fkey";
+            columns: ["disposition_id"];
+            isOneToOne: false;
+            referencedRelation: "call_dispositions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -344,6 +409,7 @@ export interface Database {
       call_type: CallType;
       lead_field_type: LeadFieldType;
       lead_follow_up_status: LeadFollowUpStatus;
+      call_log_source: CallLogSource;
     };
     CompositeTypes: Record<string, never>;
   };

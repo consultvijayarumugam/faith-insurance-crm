@@ -9,6 +9,7 @@ import {
   Award,
   SlidersHorizontal,
   CalendarDays,
+  PhoneCall,
 } from "lucide-react";
 
 export interface NavItem {
@@ -35,6 +36,7 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/statuses", label: "Lead Statuses", icon: Tag },
   { href: "/admin/custom-fields", label: "Custom Fields", icon: SlidersHorizontal },
   { href: "/admin/tags", label: "Tags", icon: Tags },
+  { href: "/admin/dispositions", label: "Dispositions", icon: PhoneCall },
   { href: "/admin/agents", label: "Agents", icon: Users },
   { href: "/admin/upload", label: "Bulk Upload", icon: UploadCloud },
 ];

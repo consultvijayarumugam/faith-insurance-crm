@@ -1,6 +1,6 @@
-import type { CallType, LeadFieldType, LeadFollowUpStatus, UserRole } from "./database.types";
+import type { CallLogSource, CallType, LeadFieldType, LeadFollowUpStatus, UserRole } from "./database.types";
 
-export type { UserRole, CallType, LeadFieldType, LeadFollowUpStatus } from "./database.types";
+export type { UserRole, CallType, LeadFieldType, LeadFollowUpStatus, CallLogSource } from "./database.types";
 export type { Database } from "./database.types";
 
 export const CALL_TYPES: CallType[] = [
@@ -87,6 +87,26 @@ export interface Tag {
   color: string;
   created_by: string | null;
   created_at: string;
+}
+
+export interface CallDisposition {
+  id: string;
+  name: string;
+  sort_order: number;
+}
+
+export interface CallLog {
+  id: string;
+  lead_id: string;
+  agent_id: string;
+  disposition_id: string;
+  duration_seconds: number;
+  notes: string | null;
+  source: CallLogSource;
+  started_at: string;
+  created_at: string;
+  /** Populated only where the query joins call_dispositions(name). */
+  disposition_name?: string;
 }
 
 export interface LeadFollowUp {
