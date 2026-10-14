@@ -11,6 +11,7 @@ import {
   CalendarDays,
   PhoneCall,
   BarChart3,
+  Clock,
 } from "lucide-react";
 
 export interface NavItem {
@@ -27,6 +28,7 @@ export const agentNavItems: NavItem[] = [
   { href: "/agent/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/agent/leads", label: "My Leads", icon: Contact },
   { href: "/agent/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/agent/attendance", label: "Attendance", icon: Clock },
 ];
 
 export const adminNavItems: NavItem[] = [
@@ -39,6 +41,7 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/tags", label: "Tags", icon: Tags },
   { href: "/admin/dispositions", label: "Dispositions", icon: PhoneCall },
   { href: "/admin/reports/performance", label: "Performance Reports", icon: BarChart3 },
+  { href: "/admin/attendance", label: "Attendance", icon: Clock },
   { href: "/admin/agents", label: "Agents", icon: Users },
   { href: "/admin/upload", label: "Bulk Upload", icon: UploadCloud },
 ];

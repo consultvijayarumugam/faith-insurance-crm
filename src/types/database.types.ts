@@ -10,6 +10,10 @@ export type LeadFollowUpStatus = "pending" | "done" | "missed";
 
 export type CallLogSource = "web" | "mobile";
 
+export type AttendanceCorrectionStatus = "pending" | "approved" | "rejected";
+
+export type AttendanceLocationStatus = "captured" | "denied" | "unavailable";
+
 export type CallType =
   | "Inbound Call"
   | "Outbound Call"
@@ -411,6 +415,104 @@ export interface Database {
         };
         Relationships: [];
       };
+      attendance_sessions: {
+        Row: {
+          id: string;
+          agent_id: string;
+          work_date: string;
+          punch_in_at: string;
+          punch_out_at: string | null;
+          punch_in_latitude: number | null;
+          punch_in_longitude: number | null;
+          punch_in_accuracy_m: number | null;
+          punch_in_location_status: AttendanceLocationStatus | null;
+          punch_out_latitude: number | null;
+          punch_out_longitude: number | null;
+          punch_out_accuracy_m: number | null;
+          punch_out_location_status: AttendanceLocationStatus | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          work_date: string;
+          punch_in_at?: string;
+          punch_out_at?: string | null;
+          punch_in_latitude?: number | null;
+          punch_in_longitude?: number | null;
+          punch_in_accuracy_m?: number | null;
+          punch_in_location_status?: AttendanceLocationStatus | null;
+          punch_out_latitude?: number | null;
+          punch_out_longitude?: number | null;
+          punch_out_accuracy_m?: number | null;
+          punch_out_location_status?: AttendanceLocationStatus | null;
+        };
+        Update: {
+          punch_in_at?: string;
+          punch_out_at?: string | null;
+          punch_in_latitude?: number | null;
+          punch_in_longitude?: number | null;
+          punch_in_accuracy_m?: number | null;
+          punch_in_location_status?: AttendanceLocationStatus | null;
+          punch_out_latitude?: number | null;
+          punch_out_longitude?: number | null;
+          punch_out_accuracy_m?: number | null;
+          punch_out_location_status?: AttendanceLocationStatus | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "attendance_sessions_agent_id_fkey";
+            columns: ["agent_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      attendance_corrections: {
+        Row: {
+          id: string;
+          agent_id: string;
+          work_date: string;
+          requested_punch_in_at: string | null;
+          requested_punch_out_at: string | null;
+          reason: string;
+          status: AttendanceCorrectionStatus;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          work_date: string;
+          requested_punch_in_at?: string | null;
+          requested_punch_out_at?: string | null;
+          reason: string;
+          status?: AttendanceCorrectionStatus;
+        };
+        Update: {
+          status?: AttendanceCorrectionStatus;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "attendance_corrections_agent_id_fkey";
+            columns: ["agent_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "attendance_corrections_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -425,6 +527,8 @@ export interface Database {
       lead_field_type: LeadFieldType;
       lead_follow_up_status: LeadFollowUpStatus;
       call_log_source: CallLogSource;
+      attendance_correction_status: AttendanceCorrectionStatus;
+      attendance_location_status: AttendanceLocationStatus;
     };
     CompositeTypes: Record<string, never>;
   };

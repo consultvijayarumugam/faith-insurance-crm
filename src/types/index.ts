@@ -1,4 +1,6 @@
 import type {
+  AttendanceCorrectionStatus,
+  AttendanceLocationStatus,
   CallLogSource,
   CallType,
   LeadFieldType,
@@ -12,6 +14,8 @@ export type {
   LeadFieldType,
   LeadFollowUpStatus,
   CallLogSource,
+  AttendanceCorrectionStatus,
+  AttendanceLocationStatus,
 } from "./database.types";
 export type { Database } from "./database.types";
 
@@ -129,6 +133,44 @@ export interface CallLog {
 
 export interface PerformanceThreshold {
   min_calls_per_week: number;
+}
+
+export interface AttendanceSession {
+  id: string;
+  agent_id: string;
+  work_date: string;
+  punch_in_at: string;
+  punch_out_at: string | null;
+  punch_in_latitude: number | null;
+  punch_in_longitude: number | null;
+  punch_in_accuracy_m: number | null;
+  punch_in_location_status: AttendanceLocationStatus | null;
+  punch_out_latitude: number | null;
+  punch_out_longitude: number | null;
+  punch_out_accuracy_m: number | null;
+  punch_out_location_status: AttendanceLocationStatus | null;
+  created_at: string;
+  /** Populated only where the query joins users(name). */
+  agent_name?: string;
+}
+
+export interface AttendanceLocationSetting {
+  require_location_for_punch: boolean;
+}
+
+export interface AttendanceCorrection {
+  id: string;
+  agent_id: string;
+  work_date: string;
+  requested_punch_in_at: string | null;
+  requested_punch_out_at: string | null;
+  reason: string;
+  status: AttendanceCorrectionStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  /** Populated only where the query joins users(name). */
+  agent_name?: string;
 }
 
 export interface LeadFollowUp {
