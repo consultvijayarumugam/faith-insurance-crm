@@ -8,19 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { LeadFieldDefinition, LeadStatusOption } from "@/types";
+import type { LeadFieldDefinition, LeadStatusOption, Tag } from "@/types";
 
 export function LeadsFilters({
   products,
   agents,
   statuses,
   selectFields,
+  tags,
 }: {
   products: string[];
   agents?: { id: string; name: string }[];
   statuses: LeadStatusOption[];
   /** Admin-defined dropdown-type custom fields, filterable one at a time. */
   selectFields?: LeadFieldDefinition[];
+  tags?: Tag[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,8 +36,9 @@ export function LeadsFilters({
   const followup = searchParams.get("followup") ?? "";
   const cf = searchParams.get("cf") ?? "";
   const cfv = searchParams.get("cfv") ?? "";
+  const tag = searchParams.get("tag") ?? "";
 
-  const hasFilters = Boolean(agent || status || product || from || to || followup || cf);
+  const hasFilters = Boolean(agent || status || product || from || to || followup || cf || tag);
   const activeField = (selectFields ?? []).find((f) => f.id === cf);
 
   function updateCustomField(fieldId: string) {
@@ -170,6 +173,20 @@ export function LeadsFilters({
               </div>
             )}
           </>
+        )}
+
+        {tags && tags.length > 0 && (
+          <div className="w-44 space-y-1.5">
+            <Label htmlFor="filter-tag">Tag</Label>
+            <Select id="filter-tag" value={tag} onChange={(e) => updateParam("tag", e.target.value)}>
+              <option value="">All tags</option>
+              {tags.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </Select>
+          </div>
         )}
 
         <div className="w-40 space-y-1.5">

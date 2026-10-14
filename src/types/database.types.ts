@@ -243,9 +243,63 @@ export interface Database {
           },
         ];
       };
+      tags: {
+        Row: {
+          id: string;
+          name: string;
+          color: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          color: string;
+          created_by?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      lead_tags: {
+        Row: {
+          id: string;
+          lead_id: string;
+          tag_id: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          tag_id: string;
+          created_by?: string | null;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "lead_tags_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lead_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      find_lead_by_mobile: {
+        Args: { p_mobile: string };
+        Returns: { lead_name: string; owner_name: string }[];
+      };
+    };
     Enums: {
       user_role: UserRole;
       call_type: CallType;

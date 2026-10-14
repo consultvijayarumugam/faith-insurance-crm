@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { Plus, UploadCloud } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { AdminLeadsTable } from "@/components/leads/admin-leads-table";
-import type { Lead, LeadFieldDefinition } from "@/types";
+import { Button } from "@/components/ui/button";
+import type { Lead, LeadFieldDefinition, Tag } from "@/types";
 
 export default async function AdminLeadsPage({
   searchParams,
@@ -15,10 +18,15 @@ export default async function AdminLeadsPage({
     followup?: string;
     cf?: string;
     cfv?: string;
+    tag?: string;
   };
 }) {
   const supabase = await createClient();
 
+  // Tags are fetched as a separate query below (not embedded here) so that a
+  // missing/misbehaving tags table — e.g. its migration hasn't been run yet
+  // — can never take down the core leads list with it; the two queries fail
+  // independently.
   let query = supabase
     .from("leads")
     .select(
@@ -68,7 +76,16 @@ export default async function AdminLeadsPage({
     query = query.in("id", ids.length > 0 ? ids : [NO_MATCH_ID]);
   }
 
-  const [{ data: leads }, { data: productRows }, { data: agents }, { data: statuses }, { data: fieldDefinitions }] =
+  if (searchParams.tag) {
+    const { data: matchingTags } = await supabase
+      .from("lead_tags")
+      .select("lead_id")
+      .eq("tag_id", searchParams.tag);
+    const ids = (matchingTags ?? []).map((v) => v.lead_id);
+    query = query.in("id", ids.length > 0 ? ids : [NO_MATCH_ID]);
+  }
+
+  const [{ data: leads }, { data: productRows }, { data: agents }, { data: statuses }, { data: fieldDefinitions }, { data: allTags }] =
     await Promise.all([
       query,
       supabase.from("leads").select("product_pitched"),
@@ -78,11 +95,33 @@ export default async function AdminLeadsPage({
         .select("id, name, color, sort_order, is_won, is_lost")
         .order("sort_order"),
       supabase.from("lead_field_definitions").select("id, name, field_type, options, is_required, sort_order"),
+      supabase.from("tags").select("id, name, color, created_by, created_at").order("name"),
     ]);
 
   const selectFields = ((fieldDefinitions ?? []) as LeadFieldDefinition[]).filter(
     (f) => f.field_type === "select"
   );
+
+  const leadIds = (leads ?? []).map((l) => l.id);
+  const tagsByLeadId = new Map<string, Tag[]>();
+  if (leadIds.length > 0) {
+    const { data: leadTagRows } = await supabase
+      .from("lead_tags")
+      .select("lead_id, tag:tags(id, name, color, created_by, created_at)")
+      .in("lead_id", leadIds);
+    (leadTagRows ?? []).forEach((row) => {
+      const tag = row.tag as unknown as Tag | null;
+      if (!tag) return;
+      const existing = tagsByLeadId.get(row.lead_id) ?? [];
+      existing.push(tag);
+      tagsByLeadId.set(row.lead_id, existing);
+    });
+  }
+
+  const leadsWithTags: Lead[] = (leads ?? []).map((l) => ({
+    ...(l as unknown as Lead),
+    tags: tagsByLeadId.get(l.id) ?? [],
+  }));
 
   const products = Array.from(
     new Set(
@@ -94,20 +133,43 @@ export default async function AdminLeadsPage({
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">Leads</h2>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/upload">
+            <Button type="button" variant="secondary" size="sm">
+              <UploadCloud className="h-3.5 w-3.5" />
+              Bulk upload
+            </Button>
+          </Link>
+          <Link href="/admin/leads/new">
+            <Button type="button" size="sm">
+              <Plus className="h-3.5 w-3.5" />
+              New lead
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       <LeadsFilters
         products={products}
         agents={agents ?? []}
         statuses={statuses ?? []}
         selectFields={selectFields}
+        tags={(allTags ?? []) as Tag[]}
       />
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          {(leads ?? []).length} lead{(leads ?? []).length === 1 ? "" : "s"}
+          {leadsWithTags.length} lead{leadsWithTags.length === 1 ? "" : "s"}
         </p>
       </div>
 
-      <AdminLeadsTable leads={(leads ?? []) as unknown as Lead[]} agents={agents ?? []} />
+      <AdminLeadsTable
+        leads={leadsWithTags}
+        agents={agents ?? []}
+        allTags={(allTags ?? []) as Tag[]}
+      />
     </div>
   );
 }

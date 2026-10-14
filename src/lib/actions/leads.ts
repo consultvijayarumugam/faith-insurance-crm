@@ -2,9 +2,180 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { leadUpdateSchema, noteCreateSchema } from "@/lib/validations/lead";
+import { leadCreateSchema, leadUpdateSchema, noteCreateSchema } from "@/lib/validations/lead";
 import type { BulkLeadRow } from "@/lib/validations/lead";
+import { makeFieldValuesSchema } from "@/lib/validations/custom-fields";
+import type { LeadFieldDefinition } from "@/types";
 import { MAX_BULK_IMPORT_ROWS } from "@/lib/constants";
+
+export interface CreateLeadResult {
+  leadId: string;
+}
+
+export async function createLead(
+  formData: FormData
+): Promise<CreateLeadResult | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const isAdmin = profile?.role === "admin";
+
+  const parsed = leadCreateSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  // Never trust a client-supplied agent_id for a non-admin caller — the
+  // agent-facing form doesn't even render this field. leads_insert's WITH
+  // CHECK would reject a mismatched agent_id anyway, but resolving it
+  // server-side keeps that intent explicit in app code too, not just in RLS.
+  let agentId: string;
+  if (isAdmin) {
+    if (!parsed.data.agent_id) {
+      return { error: "Select an agent to assign this lead to." };
+    }
+    const { data: agentRow } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", parsed.data.agent_id)
+      .eq("role", "agent")
+      .maybeSingle();
+    if (!agentRow) return { error: "Selected agent not found." };
+    agentId = agentRow.id;
+  } else {
+    agentId = user.id;
+  }
+
+  // Cross-agent duplicate check via a narrow SECURITY DEFINER RPC (see
+  // 0005_lead_duplicate_lookup.sql) — a plain query would be silently
+  // filtered to the caller's own leads by leads_select, letting an agent
+  // create a second lead for a number another agent already owns.
+  const { data: dup, error: dupError } = await supabase.rpc("find_lead_by_mobile", {
+    p_mobile: parsed.data.mobile_number,
+  });
+  if (dupError) return { error: dupError.message };
+  const dupRow = dup?.[0];
+  if (dupRow) {
+    return {
+      error: `This mobile number already belongs to "${dupRow.lead_name}" (owned by ${dupRow.owner_name}).`,
+    };
+  }
+
+  let statusId = parsed.data.status_id;
+  if (!statusId) {
+    const { data: firstStatus } = await supabase
+      .from("lead_statuses")
+      .select("id")
+      .order("sort_order")
+      .limit(1)
+      .maybeSingle();
+    if (!firstStatus) {
+      return { error: "No lead statuses are configured. Set one up under Lead Statuses first." };
+    }
+    statusId = firstStatus.id;
+  }
+
+  // Custom-field values are validated the same way saveFieldValues does —
+  // unlike bulkImportLeads' silent-skip, a single manual creation surfaces a
+  // bad/missing required value as a real error instead of quietly dropping it.
+  const { data: fieldDefinitionsData } = await supabase
+    .from("lead_field_definitions")
+    .select("id, name, field_type, options, is_required, sort_order")
+    .order("sort_order");
+  const fieldDefinitions = (fieldDefinitionsData ?? []) as LeadFieldDefinition[];
+
+  let fieldValues: Record<string, string> = {};
+  if (fieldDefinitions.length > 0) {
+    const fieldSchema = makeFieldValuesSchema(fieldDefinitions);
+    const parsedFields = fieldSchema.safeParse(Object.fromEntries(formData.entries()));
+    if (!parsedFields.success) {
+      return { error: parsedFields.error.issues[0]?.message ?? "Invalid custom field value" };
+    }
+    fieldValues = parsedFields.data as Record<string, string>;
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("leads")
+    .insert({
+      agent_id: agentId,
+      name: parsed.data.name,
+      mobile_number: parsed.data.mobile_number,
+      email: parsed.data.email || null,
+      product_pitched: parsed.data.product_pitched || null,
+      value: parsed.data.value,
+      status_id: statusId,
+      policy_start_date: parsed.data.policy_start_date || null,
+      policy_end_date: parsed.data.policy_end_date || null,
+      next_follow_up_date: parsed.data.next_follow_up_date || null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) {
+    return { error: error?.message ?? "Could not create lead." };
+  }
+
+  const leadId = inserted.id as string;
+
+  // Secondary writes (note, tags, custom field values) run after the lead
+  // itself exists, scoped by the same RLS ownership rule as everywhere else.
+  // Best-effort by design — same philosophy as bulkImportLeads: the lead
+  // that was just created is never rolled back over one of these.
+  const tasks: PromiseLike<unknown>[] = [];
+
+  if (parsed.data.notes) {
+    tasks.push(
+      supabase
+        .from("lead_notes")
+        .insert({ lead_id: leadId, agent_id: user.id, note_text: parsed.data.notes })
+    );
+  }
+
+  const tagIds = Array.from(new Set(formData.getAll("tag_ids").map(String).filter(Boolean)));
+  if (tagIds.length > 0) {
+    tasks.push(
+      supabase
+        .from("lead_tags")
+        .insert(tagIds.map((tagId) => ({ lead_id: leadId, tag_id: tagId, created_by: user.id })))
+    );
+  }
+
+  if (fieldDefinitions.length > 0) {
+    const valueRows = fieldDefinitions
+      .map((def) => {
+        const raw = (fieldValues[`field_${def.id}`] ?? "").trim();
+        if (!raw) return null;
+        return {
+          lead_id: leadId,
+          field_definition_id: def.id,
+          value_text: def.field_type === "text" || def.field_type === "select" ? raw : null,
+          value_number: def.field_type === "number" ? Number(raw) : null,
+          value_date: def.field_type === "date" ? raw : null,
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+    if (valueRows.length > 0) {
+      tasks.push(supabase.from("lead_field_values").insert(valueRows));
+    }
+  }
+
+  await Promise.allSettled(tasks);
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/agent/leads");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/agent/dashboard");
+
+  return { leadId };
+}
 
 export async function updateLead(leadId: string, formData: FormData) {
   const parsed = leadUpdateSchema.safeParse(

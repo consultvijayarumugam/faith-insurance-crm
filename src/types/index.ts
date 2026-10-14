@@ -49,6 +49,9 @@ export interface Lead {
   proposal_notes: string | null;
   created_at: string;
   updated_at: string;
+  /** Populated only where the page's query embeds lead_tags(tag:tags(*)) —
+   * not every Lead-shaped query bothers to fetch tags. */
+  tags?: Tag[];
 }
 
 export interface LeadNote {
@@ -76,4 +79,12 @@ export interface LeadFieldValue {
   value_text: string | null;
   value_number: number | null;
   value_date: string | null;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  created_by: string | null;
+  created_at: string;
 }

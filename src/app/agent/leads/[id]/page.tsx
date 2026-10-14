@@ -7,7 +7,8 @@ import { LeadInfoCard } from "@/components/leads/lead-info-card";
 import { NotesTimeline, type TimelineNote } from "@/components/leads/notes-timeline";
 import { AddNoteForm } from "@/components/leads/add-note-form";
 import { CustomFieldsCard } from "@/components/leads/custom-fields-card";
-import type { Lead, LeadFieldDefinition, LeadFieldValue } from "@/types";
+import { TagsCard } from "@/components/leads/tags-card";
+import type { Lead, LeadFieldDefinition, LeadFieldValue, Tag } from "@/types";
 
 export default async function AgentLeadDetailPage({
   params,
@@ -27,7 +28,7 @@ export default async function AgentLeadDetailPage({
 
   if (!lead) notFound();
 
-  const [{ data: notesData }, { data: fieldDefinitions }, { data: fieldValues }] =
+  const [{ data: notesData }, { data: fieldDefinitions }, { data: fieldValues }, { data: leadTagRows }, { data: allTags }] =
     await Promise.all([
       supabase
         .from("lead_notes")
@@ -42,6 +43,11 @@ export default async function AgentLeadDetailPage({
         .from("lead_field_values")
         .select("id, lead_id, field_definition_id, value_text, value_number, value_date")
         .eq("lead_id", params.id),
+      supabase
+        .from("lead_tags")
+        .select("tag:tags(id, name, color, created_by, created_at)")
+        .eq("lead_id", params.id),
+      supabase.from("tags").select("id, name, color, created_by, created_at").order("name"),
     ]);
 
   const notes = notesData ?? [];
@@ -57,6 +63,10 @@ export default async function AgentLeadDetailPage({
       .in("id", authorIds);
     (authors ?? []).forEach((a) => authorNames.set(a.id, a.name));
   }
+
+  const leadTags = (leadTagRows ?? [])
+    .map((r) => r.tag)
+    .filter((t): t is Tag => Boolean(t)) as unknown as Tag[];
 
   const timelineNotes: TimelineNote[] = notes.map((n) => ({
     id: n.id,
@@ -83,6 +93,8 @@ export default async function AgentLeadDetailPage({
         definitions={(fieldDefinitions ?? []) as LeadFieldDefinition[]}
         values={(fieldValues ?? []) as LeadFieldValue[]}
       />
+
+      <TagsCard leadId={params.id} leadTags={leadTags} allTags={(allTags ?? []) as Tag[]} />
 
       <Card>
         <CardContent className="space-y-6">
