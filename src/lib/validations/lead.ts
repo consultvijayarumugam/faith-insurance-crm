@@ -52,7 +52,6 @@ export const leadUpdateSchema = z
     status_id: idString("Select a status"),
     policy_start_date: z.string().trim(),
     policy_end_date: z.string().trim(),
-    next_follow_up_date: z.string().trim(),
     proposal_amount: optionalAmount,
     proposal_sent_date: optionalDateString,
     proposal_notes: z.string().trim(),

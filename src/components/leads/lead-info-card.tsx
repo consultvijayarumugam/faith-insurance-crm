@@ -97,13 +97,16 @@ export function LeadInfoCard({ lead, statuses }: { lead: Lead; statuses: LeadSta
                 {formatDate(lead.created_at)}
               </dd>
             </div>
+            {/* Derived from the earliest pending row in lead_follow_ups by a
+                DB trigger — not editable here; schedule/reschedule via the
+                Follow-ups card below. */}
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
                 Next follow-up
               </dt>
               <dd className="mt-1 flex items-center gap-1 text-sm text-slate-900">
                 <CalendarClock className="h-3.5 w-3.5 text-slate-400" />
-                {lead.next_follow_up_date ? formatDate(lead.next_follow_up_date) : "Not set"}
+                {lead.next_follow_up_date ? formatDate(lead.next_follow_up_date) : "None scheduled"}
               </dd>
             </div>
             {lead.policy_start_date && (
@@ -241,15 +244,6 @@ export function LeadInfoCard({ lead, statuses }: { lead: Lead; statuses: LeadSta
                   </option>
                 ))}
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="next_follow_up_date">Next follow-up</Label>
-              <Input
-                id="next_follow_up_date"
-                name="next_follow_up_date"
-                type="date"
-                defaultValue={lead.next_follow_up_date ?? ""}
-              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="policy_start_date">Policy start</Label>

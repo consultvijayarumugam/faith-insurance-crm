@@ -8,7 +8,8 @@ import { NotesTimeline, type TimelineNote } from "@/components/leads/notes-timel
 import { AddNoteForm } from "@/components/leads/add-note-form";
 import { CustomFieldsCard } from "@/components/leads/custom-fields-card";
 import { TagsCard } from "@/components/leads/tags-card";
-import type { Lead, LeadFieldDefinition, LeadFieldValue, Tag } from "@/types";
+import { FollowUpsCard } from "@/components/leads/follow-ups-card";
+import type { Lead, LeadFieldDefinition, LeadFieldValue, LeadFollowUp, Tag } from "@/types";
 
 export default async function AgentLeadDetailPage({
   params,
@@ -28,7 +29,7 @@ export default async function AgentLeadDetailPage({
 
   if (!lead) notFound();
 
-  const [{ data: notesData }, { data: fieldDefinitions }, { data: fieldValues }, { data: leadTagRows }, { data: allTags }] =
+  const [{ data: notesData }, { data: fieldDefinitions }, { data: fieldValues }, { data: leadTagRows }, { data: allTags }, { data: followUps }] =
     await Promise.all([
       supabase
         .from("lead_notes")
@@ -48,6 +49,10 @@ export default async function AgentLeadDetailPage({
         .select("tag:tags(id, name, color, created_by, created_at)")
         .eq("lead_id", params.id),
       supabase.from("tags").select("id, name, color, created_by, created_at").order("name"),
+      supabase
+        .from("lead_follow_ups")
+        .select("id, lead_id, agent_id, scheduled_at, status, notes, completed_at, created_at")
+        .eq("lead_id", params.id),
     ]);
 
   const notes = notesData ?? [];
@@ -95,6 +100,8 @@ export default async function AgentLeadDetailPage({
       />
 
       <TagsCard leadId={params.id} leadTags={leadTags} allTags={(allTags ?? []) as Tag[]} />
+
+      <FollowUpsCard leadId={params.id} followUps={(followUps ?? []) as LeadFollowUp[]} />
 
       <Card>
         <CardContent className="space-y-6">

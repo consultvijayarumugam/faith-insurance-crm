@@ -114,7 +114,6 @@ export async function createLead(
       status_id: statusId,
       policy_start_date: parsed.data.policy_start_date || null,
       policy_end_date: parsed.data.policy_end_date || null,
-      next_follow_up_date: parsed.data.next_follow_up_date || null,
     })
     .select("id")
     .single();
@@ -136,6 +135,19 @@ export async function createLead(
       supabase
         .from("lead_notes")
         .insert({ lead_id: leadId, agent_id: user.id, note_text: parsed.data.notes })
+    );
+  }
+
+  // leads.next_follow_up_date is trigger-derived from lead_follow_ups (see
+  // 0006_follow_ups.sql) — this form's convenience date field creates the
+  // first pending follow-up row rather than writing the column directly.
+  if (parsed.data.next_follow_up_date) {
+    tasks.push(
+      supabase.from("lead_follow_ups").insert({
+        lead_id: leadId,
+        agent_id: agentId,
+        scheduled_at: `${parsed.data.next_follow_up_date}T09:00:00`,
+      })
     );
   }
 
@@ -202,7 +214,6 @@ export async function updateLead(leadId: string, formData: FormData) {
       status_id: parsed.data.status_id,
       policy_start_date: parsed.data.policy_start_date || null,
       policy_end_date: parsed.data.policy_end_date || null,
-      next_follow_up_date: parsed.data.next_follow_up_date || null,
       proposal_amount:
         parsed.data.proposal_amount === "" ? null : Number(parsed.data.proposal_amount),
       proposal_sent_date: parsed.data.proposal_sent_date || null,

@@ -6,6 +6,8 @@ export type UserRole = "agent" | "admin";
 
 export type LeadFieldType = "text" | "number" | "date" | "select";
 
+export type LeadFollowUpStatus = "pending" | "done" | "missed";
+
 export type CallType =
   | "Inbound Call"
   | "Outbound Call"
@@ -292,6 +294,43 @@ export interface Database {
           },
         ];
       };
+      lead_follow_ups: {
+        Row: {
+          id: string;
+          lead_id: string;
+          agent_id: string;
+          scheduled_at: string;
+          status: LeadFollowUpStatus;
+          notes: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          agent_id: string;
+          scheduled_at: string;
+          status?: LeadFollowUpStatus;
+          notes?: string | null;
+          completed_at?: string | null;
+        };
+        Update: {
+          scheduled_at?: string;
+          status?: LeadFollowUpStatus;
+          notes?: string | null;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lead_follow_ups_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -304,6 +343,7 @@ export interface Database {
       user_role: UserRole;
       call_type: CallType;
       lead_field_type: LeadFieldType;
+      lead_follow_up_status: LeadFollowUpStatus;
     };
     CompositeTypes: Record<string, never>;
   };

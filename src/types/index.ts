@@ -1,6 +1,6 @@
-import type { CallType, LeadFieldType, UserRole } from "./database.types";
+import type { CallType, LeadFieldType, LeadFollowUpStatus, UserRole } from "./database.types";
 
-export type { UserRole, CallType, LeadFieldType } from "./database.types";
+export type { UserRole, CallType, LeadFieldType, LeadFollowUpStatus } from "./database.types";
 export type { Database } from "./database.types";
 
 export const CALL_TYPES: CallType[] = [
@@ -87,4 +87,18 @@ export interface Tag {
   color: string;
   created_by: string | null;
   created_at: string;
+}
+
+export interface LeadFollowUp {
+  id: string;
+  lead_id: string;
+  agent_id: string;
+  scheduled_at: string;
+  status: LeadFollowUpStatus;
+  notes: string | null;
+  completed_at: string | null;
+  created_at: string;
+  /** Populated only where the query joins leads(name) — the calendar views
+   * need it, a plain per-lead follow-ups list doesn't. */
+  lead_name?: string;
 }

@@ -8,6 +8,7 @@ import {
   Tags,
   Award,
   SlidersHorizontal,
+  CalendarDays,
 } from "lucide-react";
 
 export interface NavItem {
@@ -23,11 +24,13 @@ export interface NavItem {
 export const agentNavItems: NavItem[] = [
   { href: "/agent/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/agent/leads", label: "My Leads", icon: Contact },
+  { href: "/agent/calendar", label: "Calendar", icon: CalendarDays },
 ];
 
 export const adminNavItems: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/leads", label: "All Leads", icon: Contact },
+  { href: "/admin/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/admin/closed-cases", label: "Closed Cases", icon: Award },
   { href: "/admin/statuses", label: "Lead Statuses", icon: Tag },
   { href: "/admin/custom-fields", label: "Custom Fields", icon: SlidersHorizontal },
