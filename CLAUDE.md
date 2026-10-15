@@ -49,7 +49,8 @@ src/
 │   │   │   │                    #   follow-ups, call log, notes timeline
 │   │   │   └── new/             # manual single-lead creation
 │   │   ├── calendar/            # follow-up calendar
-│   │   └── attendance/          # punch in/out, correction requests, own history
+│   │   ├── attendance/          # punch in/out, correction requests, own history
+│   │   └── allowances/          # monthly travel/expense claim entry + submit
 │   └── admin/                   # role: admin — layout enforces + redirects
 │       ├── dashboard/           # org-wide stats + charts
 │       ├── leads/                # all leads, reassignable
@@ -65,6 +66,8 @@ src/
 │       ├── attendance/           # monthly report, correction queue, location setting
 │       ├── agents/               # invite/list agents, admin password-reset fallback
 │       ├── upload/               # bulk CSV/Excel import wizard
+│       ├── allowances/           # claim review queue, claim detail, report,
+│       │                         #   rate/cap/category settings
 │       └── settings/             # data-retention controls + run log
 │   └── api/
 │       └── cron/retention-cleanup/   # the only route handler — see Cron Jobs
@@ -76,18 +79,22 @@ src/
 │   │                              #   Tailwind divs — recharts is installed but
 │   │                              #   unused; keep new charts consistent with this)
 │   ├── leads/, agents/, statuses/, custom-fields/, tags/, dispositions/,
-│   │   upload/, reports/, settings/, attendance/
+│   │   upload/, reports/, settings/, attendance/, allowance/
 ├── lib/
 │   ├── actions/                  # Server Actions ("use server") — all writes go here
 │   │                              #   leads, agents, statuses, custom-fields, tags,
 │   │                              #   follow-ups, call-logs, dispositions, settings,
-│   │                              #   attendance, retention
+│   │                              #   attendance, retention, allowance-entries,
+│   │                              #   allowance-review, allowance-settings
+│   │                              #   (allowance-reports.ts is read-only helpers,
+│   │                              #   not a "use server" action file — see below)
 │   ├── validations/               # zod schemas, one file per action group
 │   ├── parsing/                   # client-side CSV/Excel parsing for bulk upload
 │   ├── geolocation.ts             # one-shot navigator.geolocation capture for
 │   │                              #   attendance punches — no background tracking
 │   ├── attendance.ts              # IST work-date helpers, Google Maps link builder,
 │   │                              #   low-accuracy threshold
+│   ├── allowance.ts               # IST month helpers, vehicle-type labels
 │   ├── supabase/
 │   │   ├── client.ts              # browser client (Client Components)
 │   │   ├── server.ts              # server client (Server Components/Actions)
@@ -171,6 +178,31 @@ const fetchLead = async (id: string): Promise<Lead> => { ... };
   independently checks `auth.role() = 'service_role'` before doing anything
   destructive. Follow both layers (grant + in-function check), not just one,
   for any future function with the same shape.
+- Allowance claims (0013) are the one feature so far with a true multi-stage
+  state machine. Entry status: `draft` → `submitted` → `approved`/`rejected`;
+  a rejected entry is fixed and resubmitted in one step, straight back to
+  `submitted`, never through `draft` again. Claim status is **auto-derived**
+  from its entries by `recompute_allowance_claim()` every time an entry or
+  expense changes, except while the claim itself is `draft` (pre-submission)
+  or `paid` (terminal) — those two only get their totals refreshed, never an
+  auto status change. `paid` is only ever set by an explicit admin action.
+  `allowance_entries.travel_amount` is never trusted from the client — a
+  `BEFORE INSERT OR UPDATE` trigger unconditionally recomputes it from the
+  `allowance_rates` row in effect on `entry_date`, for every actor. The one
+  place this app has one trigger deliberately bypass another: a non-admin
+  session can only move a claim from `draft` to `submitted` directly: every
+  other claim-status write happens inside `recompute_allowance_claim()`,
+  which flips a transaction-local `allowance.system_sync` flag that the
+  claims guard trigger explicitly trusts — not by elevating privilege, since
+  ordinary RLS already permits the write. `allowance_audit_log` has no
+  UPDATE/DELETE policy at all, so RLS denies both to every role including
+  admins by default — this was verified directly (see `scripts/
+  seed-demo-allowances.mjs`'s header), since a 0-row RLS-blocked UPDATE/
+  DELETE returns no error, only a no-op, so "did it error" is not a valid
+  test for this shape — check the row's actual state afterward instead.
+  Receipts are the app's first use of Supabase Storage: a private bucket,
+  path convention `{agent_id}/{entry_id}/{filename}`, RLS on
+  `storage.objects` keyed on `(storage.foldername(name))[1] = auth.uid()`.
 
 ### Server Actions
 - All writes (create/update/delete, invites, imports) go through a Server
@@ -243,6 +275,7 @@ const fetchLead = async (id: string): Promise<Lead> => { ... };
 | `0010_fix_attendance_punch_out.sql` | Fixes the punch-out RLS policy (WITH CHECK wrongly re-required the pre-update "still open" state) + adds the self-edit trigger |
 | `0011_attendance_location.sql` | Adds punch-in/punch-out lat/lng/accuracy/status columns, the `require_location_for_punch` setting, loosens `app_settings` SELECT to any signed-in user |
 | `0012_retention.sql` | `retention_log` + `run_retention_cleanup()` — single-transaction batch sweep of closed/lost leads and old attendance records, service-role-only |
+| `0013_allowance_claims.sql` | `allowance_rates`, `allowance_claims`, `allowance_entries`, `allowance_entry_leads`, `allowance_expenses`, `allowance_receipts`, `allowance_audit_log`, a new private `allowance-receipts` Storage bucket, and a new `allowance` row in `app_settings` — travel/expense claim submit → review → pay workflow, see **Data access** above for the state machine |
 
 ---
 
@@ -304,6 +337,24 @@ const fetchLead = async (id: string): Promise<Lead> => { ... };
   past an admin-configured cutoff are cleaned up, with pending follow-ups,
   pending corrections, and any recent activity always protected from
   deletion regardless of age.
+- Allowance / expense claims (0013, see **Data access** above for the state
+  machine): agent-side `/agent/allowances` — a month view with a daily
+  entry form (date, vehicle, km, purpose, extra expenses, receipt upload, an
+  optional link to that day's own leads visited), a cosmetic live preview of
+  the computed amount, submit-the-month locking, and a "fix & resubmit" flow
+  for rejected lines. Admin-side `/admin/allowances` — a review queue
+  (filterable by month/agent/status) with per-line approve/reject-with-
+  reason, read-time review flags (no punch-in that day, over the daily km
+  cap, duplicate-looking entries, an unusual jump vs. the agent's own
+  average, missing receipt above the configured threshold), mark-paid
+  (reference + date), and an admin-only logged reopen; `/admin/allowances/
+  report` (month × agent table, chart, CSV export); `/admin/allowances/
+  settings` (rate history by vehicle type with effective dates, daily km
+  cap, monthly amount cap, expense categories). Notification-bell counts
+  extend the existing agent/admin layouts (claims awaiting review for admin,
+  decided claims + a month-end submit reminder for agents) — no new
+  notifications table. Demo data: `scripts/seed-demo-allowances.mjs`
+  (service-role, `[demo]`-tagged, safe to re-run).
 
 ---
 

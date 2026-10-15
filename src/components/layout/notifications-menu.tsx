@@ -2,17 +2,25 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, CalendarClock, Cake } from "lucide-react";
+import { Bell, CalendarClock, Cake, Receipt } from "lucide-react";
 import type { Role } from "./nav-items";
 
 export function NotificationsMenu({
   role,
   followUpCount,
   birthdays,
+  allowanceCount = 0,
+  allowanceMessage,
+  monthEndReminder = false,
 }: {
   role: Role;
   followUpCount: number;
   birthdays: { id: string; name: string }[];
+  /** Admin: claims awaiting review. Agent: claims just decided, not yet paid. */
+  allowanceCount?: number;
+  allowanceMessage?: string;
+  /** Agent only — nudge to submit this month's allowance before it ends. */
+  monthEndReminder?: boolean;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState(false);
@@ -28,8 +36,10 @@ export function NotificationsMenu({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const totalCount = (followUpCount > 0 ? 1 : 0) + birthdays.length;
+  const totalCount =
+    (followUpCount > 0 ? 1 : 0) + birthdays.length + (allowanceCount > 0 ? 1 : 0) + (monthEndReminder ? 1 : 0);
   const leadsHref = role === "admin" ? "/admin/leads?followup=today" : "/agent/leads?followup=today";
+  const allowanceHref = role === "admin" ? "/admin/allowances?status=submitted" : "/agent/allowances";
 
   return (
     <div className="relative" ref={ref}>
@@ -71,6 +81,30 @@ export function NotificationsMenu({
                   <span>It&apos;s {b.name}&apos;s birthday today! 🎂</span>
                 </li>
               ))}
+              {allowanceCount > 0 && (
+                <li>
+                  <Link
+                    href={allowanceHref}
+                    onClick={() => setOpen(false)}
+                    className="flex items-start gap-2 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Receipt className="mt-0.5 h-4 w-4 shrink-0 text-warning-600" />
+                    <span>{allowanceMessage}</span>
+                  </Link>
+                </li>
+              )}
+              {monthEndReminder && (
+                <li>
+                  <Link
+                    href="/agent/allowances"
+                    onClick={() => setOpen(false)}
+                    className="flex items-start gap-2 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Receipt className="mt-0.5 h-4 w-4 shrink-0 text-warning-600" />
+                    <span>Month-end is coming up — submit this month&apos;s allowance.</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           )}
         </div>

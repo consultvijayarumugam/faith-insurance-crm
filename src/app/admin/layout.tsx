@@ -27,9 +27,10 @@ export default async function AdminLayout({
   if (profile.role !== "admin") redirect("/agent/dashboard");
 
   const today = new Date().toISOString().slice(0, 10);
-  const [{ count: followUpCount }, { data: allUsers }] = await Promise.all([
+  const [{ count: followUpCount }, { data: allUsers }, { count: pendingClaimsCount }] = await Promise.all([
     supabase.from("leads").select("id", { count: "exact", head: true }).eq("next_follow_up_date", today),
     supabase.from("users").select("id, name, birthday"),
+    supabase.from("allowance_claims").select("id", { count: "exact", head: true }).eq("status", "submitted"),
   ]);
 
   const todaysBirthdays = (allUsers ?? [])
@@ -48,6 +49,8 @@ export default async function AdminLayout({
           birthday={profile.birthday}
           followUpCount={followUpCount ?? 0}
           birthdays={todaysBirthdays}
+          allowanceCount={pendingClaimsCount ?? 0}
+          allowanceMessage={`${pendingClaimsCount ?? 0} allowance claim${pendingClaimsCount === 1 ? "" : "s"} awaiting review`}
         />
         <main className="flex-1 px-4 py-6 sm:px-8">{children}</main>
       </div>

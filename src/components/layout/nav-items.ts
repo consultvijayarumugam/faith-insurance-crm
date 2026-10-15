@@ -13,6 +13,7 @@ import {
   BarChart3,
   Clock,
   Settings,
+  Receipt,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,6 +31,7 @@ export const agentNavItems: NavItem[] = [
   { href: "/agent/leads", label: "My Leads", icon: Contact },
   { href: "/agent/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/agent/attendance", label: "Attendance", icon: Clock },
+  { href: "/agent/allowances", label: "Allowances", icon: Receipt },
 ];
 
 export const adminNavItems: NavItem[] = [
@@ -45,6 +47,7 @@ export const adminNavItems: NavItem[] = [
   { href: "/admin/attendance", label: "Attendance", icon: Clock },
   { href: "/admin/agents", label: "Agents", icon: Users },
   { href: "/admin/upload", label: "Bulk Upload", icon: UploadCloud },
+  { href: "/admin/allowances", label: "Allowances", icon: Receipt },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

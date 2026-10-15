@@ -1,4 +1,7 @@
 import type {
+  AllowanceClaimStatus,
+  AllowanceEntryStatus,
+  AllowanceVehicleType,
   AttendanceCorrectionStatus,
   AttendanceLocationStatus,
   CallLogSource,
@@ -16,6 +19,9 @@ export type {
   CallLogSource,
   AttendanceCorrectionStatus,
   AttendanceLocationStatus,
+  AllowanceVehicleType,
+  AllowanceEntryStatus,
+  AllowanceClaimStatus,
 } from "./database.types";
 export type { Database } from "./database.types";
 
@@ -198,4 +204,97 @@ export interface LeadFollowUp {
   /** Populated only where the query joins leads(name) — the calendar views
    * need it, a plain per-lead follow-ups list doesn't. */
   lead_name?: string;
+}
+
+export interface AllowanceRate {
+  id: string;
+  vehicle_type: AllowanceVehicleType;
+  rate_per_km: number;
+  effective_from: string;
+  created_at: string;
+}
+
+export interface AllowanceClaim {
+  id: string;
+  agent_id: string;
+  month: string;
+  status: AllowanceClaimStatus;
+  submitted_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  paid_at: string | null;
+  payment_reference: string | null;
+  total_km: number;
+  total_travel_amount: number;
+  total_expenses_amount: number;
+  total_claimed_amount: number;
+  total_approved_amount: number;
+  created_at: string;
+  updated_at: string;
+  /** Populated only where the query joins users(name). */
+  agent_name?: string;
+}
+
+export interface AllowanceExpense {
+  id: string;
+  entry_id: string;
+  category: string;
+  amount: number;
+  note: string | null;
+  created_at: string;
+}
+
+export interface AllowanceReceipt {
+  id: string;
+  entry_id: string;
+  storage_path: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface AllowanceEntry {
+  id: string;
+  claim_id: string;
+  agent_id: string;
+  entry_date: string;
+  vehicle_type: AllowanceVehicleType;
+  km: number;
+  purpose: string;
+  travel_amount: number;
+  notes: string | null;
+  status: AllowanceEntryStatus;
+  rejection_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Populated only where the query embeds the related rows. */
+  expenses?: AllowanceExpense[];
+  receipts?: AllowanceReceipt[];
+  leads?: { id: string; name: string }[];
+}
+
+export interface AllowanceAuditLogEntry {
+  id: string;
+  entity_type: "entry" | "claim";
+  entity_id: string;
+  agent_id: string;
+  action: string;
+  actor_id: string;
+  from_status: string | null;
+  to_status: string | null;
+  reason: string | null;
+  created_at: string;
+  /** Populated only where the query joins users(name). */
+  actor_name?: string;
+}
+
+export interface AllowanceSettings {
+  daily_km_cap: number;
+  monthly_amount_cap: number;
+  expense_categories: string[];
+  receipt_required_above_amount: number;
 }

@@ -14,6 +14,18 @@ export type AttendanceCorrectionStatus = "pending" | "approved" | "rejected";
 
 export type AttendanceLocationStatus = "captured" | "denied" | "unavailable";
 
+export type AllowanceVehicleType = "bike" | "car" | "other";
+
+export type AllowanceEntryStatus = "draft" | "submitted" | "approved" | "rejected";
+
+export type AllowanceClaimStatus =
+  | "draft"
+  | "submitted"
+  | "approved"
+  | "partially_approved"
+  | "rejected"
+  | "paid";
+
 export type CallType =
   | "Inbound Call"
   | "Outbound Call"
@@ -526,6 +538,242 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      allowance_rates: {
+        Row: {
+          id: string;
+          vehicle_type: AllowanceVehicleType;
+          rate_per_km: number;
+          effective_from: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vehicle_type: AllowanceVehicleType;
+          rate_per_km: number;
+          effective_from: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      allowance_claims: {
+        Row: {
+          id: string;
+          agent_id: string;
+          month: string;
+          status: AllowanceClaimStatus;
+          submitted_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          paid_at: string | null;
+          payment_reference: string | null;
+          total_km: number;
+          total_travel_amount: number;
+          total_expenses_amount: number;
+          total_claimed_amount: number;
+          total_approved_amount: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          month: string;
+          status?: AllowanceClaimStatus;
+        };
+        Update: {
+          status?: AllowanceClaimStatus;
+          submitted_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          paid_at?: string | null;
+          payment_reference?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "allowance_claims_agent_id_fkey";
+            columns: ["agent_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      allowance_entries: {
+        Row: {
+          id: string;
+          claim_id: string;
+          agent_id: string;
+          entry_date: string;
+          vehicle_type: AllowanceVehicleType;
+          km: number;
+          purpose: string;
+          travel_amount: number;
+          notes: string | null;
+          status: AllowanceEntryStatus;
+          rejection_reason: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          claim_id: string;
+          agent_id: string;
+          entry_date: string;
+          vehicle_type: AllowanceVehicleType;
+          km: number;
+          purpose: string;
+          notes?: string | null;
+          status?: AllowanceEntryStatus;
+        };
+        Update: {
+          entry_date?: string;
+          vehicle_type?: AllowanceVehicleType;
+          km?: number;
+          purpose?: string;
+          notes?: string | null;
+          status?: AllowanceEntryStatus;
+          rejection_reason?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "allowance_entries_claim_id_fkey";
+            columns: ["claim_id"];
+            isOneToOne: false;
+            referencedRelation: "allowance_claims";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "allowance_entries_agent_id_fkey";
+            columns: ["agent_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      allowance_entry_leads: {
+        Row: {
+          id: string;
+          entry_id: string;
+          lead_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entry_id: string;
+          lead_id: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "allowance_entry_leads_entry_id_fkey";
+            columns: ["entry_id"];
+            isOneToOne: false;
+            referencedRelation: "allowance_entries";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "allowance_entry_leads_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      allowance_expenses: {
+        Row: {
+          id: string;
+          entry_id: string;
+          category: string;
+          amount: number;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entry_id: string;
+          category: string;
+          amount: number;
+          note?: string | null;
+        };
+        Update: {
+          category?: string;
+          amount?: number;
+          note?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "allowance_expenses_entry_id_fkey";
+            columns: ["entry_id"];
+            isOneToOne: false;
+            referencedRelation: "allowance_entries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      allowance_receipts: {
+        Row: {
+          id: string;
+          entry_id: string;
+          storage_path: string;
+          file_name: string;
+          content_type: string;
+          size_bytes: number;
+          uploaded_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entry_id: string;
+          storage_path: string;
+          file_name: string;
+          content_type: string;
+          size_bytes: number;
+          uploaded_by: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "allowance_receipts_entry_id_fkey";
+            columns: ["entry_id"];
+            isOneToOne: false;
+            referencedRelation: "allowance_entries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      allowance_audit_log: {
+        Row: {
+          id: string;
+          entity_type: "entry" | "claim";
+          entity_id: string;
+          agent_id: string;
+          action: string;
+          actor_id: string;
+          from_status: string | null;
+          to_status: string | null;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entity_type: "entry" | "claim";
+          entity_id: string;
+          agent_id: string;
+          action: string;
+          actor_id: string;
+          from_status?: string | null;
+          to_status?: string | null;
+          reason?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -551,6 +799,9 @@ export interface Database {
       call_log_source: CallLogSource;
       attendance_correction_status: AttendanceCorrectionStatus;
       attendance_location_status: AttendanceLocationStatus;
+      allowance_vehicle_type: AllowanceVehicleType;
+      allowance_entry_status: AllowanceEntryStatus;
+      allowance_claim_status: AllowanceClaimStatus;
     };
     CompositeTypes: Record<string, never>;
   };
