@@ -58,7 +58,7 @@ export function ReassignSelect({
           Reassigning…
         </p>
       )}
-      {error && <p className="text-xs text-rose-600">{error}</p>}
+      {error && <p className="text-xs text-danger-600">{error}</p>}
     </div>
   );
 }

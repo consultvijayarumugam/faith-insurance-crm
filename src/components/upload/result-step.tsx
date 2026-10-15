@@ -37,7 +37,7 @@ export function ResultStep({
                 {result.failed.map((f) => (
                   <tr key={f.rowNumber} className="border-t border-slate-100">
                     <td className="px-4 py-2 text-slate-500">{f.rowNumber}</td>
-                    <td className="px-4 py-2 text-rose-600">{f.error}</td>
+                    <td className="px-4 py-2 text-danger-600">{f.error}</td>
                   </tr>
                 ))}
               </tbody>

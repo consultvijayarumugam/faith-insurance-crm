@@ -3,7 +3,7 @@ import type { RetentionLog } from "@/types";
 
 const MODE_BADGE: Record<RetentionLog["mode"], string> = {
   dry_run: "bg-slate-100 text-slate-600",
-  live: "bg-rose-50 text-rose-700",
+  live: "bg-danger-50 text-danger-700",
 };
 
 function summarizeCounts(counts: Record<string, number>): string {

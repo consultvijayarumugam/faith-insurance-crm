@@ -118,7 +118,7 @@ function DispositionRow({
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
       <p className="text-sm font-medium text-slate-900">{disposition.name}</p>
 
-      {error && <p className="w-full text-xs text-rose-600">{error}</p>}
+      {error && <p className="w-full text-xs text-danger-600">{error}</p>}
 
       <div className="flex items-center gap-1">
         <Button
@@ -159,7 +159,7 @@ function DispositionRow({
           onClick={handleDelete}
           aria-label="Delete"
         >
-          <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+          <Trash2 className="h-3.5 w-3.5 text-danger-600" />
         </Button>
       </div>
     </li>

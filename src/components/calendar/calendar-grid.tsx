@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const STATUS_DOT: Record<CalendarEvent["status"], string> = {
-  pending: "bg-blue-500",
-  done: "bg-emerald-500",
-  missed: "bg-rose-500",
+  pending: "bg-brand-500",
+  done: "bg-success-500",
+  missed: "bg-danger-500",
 };
 
 export function CalendarGrid({

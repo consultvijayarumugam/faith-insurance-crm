@@ -61,7 +61,7 @@ export function TagManager({ tags }: { tags: Tag[] }) {
               onClick={() => handleDelete(tag)}
               aria-label={`Delete ${tag.name}`}
             >
-              <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+              <Trash2 className="h-3.5 w-3.5 text-danger-600" />
             </Button>
           </li>
         ))}

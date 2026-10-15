@@ -49,7 +49,7 @@ export function CorrectionForm() {
 
         {error && <Alert variant="error">{error}</Alert>}
         {submitted && !error && (
-          <p className="text-sm text-emerald-600">Request submitted. An admin will review it.</p>
+          <p className="text-sm text-success-600">Request submitted. An admin will review it.</p>
         )}
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">

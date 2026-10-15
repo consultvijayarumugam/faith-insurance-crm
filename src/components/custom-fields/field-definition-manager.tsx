@@ -188,7 +188,7 @@ function FieldRow({
             {FIELD_TYPE_LABELS[field.field_type]}
           </span>
           {field.is_required && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+            <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-warning-800">
               Required
             </span>
           )}
@@ -198,7 +198,7 @@ function FieldRow({
         )}
       </div>
 
-      {error && <p className="w-full text-xs text-rose-600">{error}</p>}
+      {error && <p className="w-full text-xs text-danger-600">{error}</p>}
 
       <div className="flex items-center gap-1">
         <Button
@@ -239,7 +239,7 @@ function FieldRow({
           onClick={handleDelete}
           aria-label="Delete"
         >
-          <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+          <Trash2 className="h-3.5 w-3.5 text-danger-600" />
         </Button>
       </div>
     </li>

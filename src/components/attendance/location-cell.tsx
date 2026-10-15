@@ -38,7 +38,7 @@ export function LocationCell({
       target="_blank"
       rel="noopener noreferrer"
       className={`inline-flex items-center gap-1 text-xs hover:underline ${
-        lowAccuracy ? "text-amber-600" : "text-brand-700"
+        lowAccuracy ? "text-warning-600" : "text-brand-700"
       }`}
       title={accuracyM !== null ? `Accuracy: ±${Math.round(accuracyM)} m` : undefined}
     >

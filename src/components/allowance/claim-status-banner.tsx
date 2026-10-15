@@ -7,7 +7,7 @@ const STATUS_META: Record<
   { label: string; className: string; icon: typeof Clock3 }
 > = {
   draft: { label: "Draft — not yet submitted", className: "bg-slate-100 text-slate-600", icon: FileEdit },
-  submitted: { label: "Submitted — awaiting review", className: "bg-amber-50 text-amber-700", icon: Clock3 },
+  submitted: { label: "Submitted — awaiting review", className: "bg-warning-50 text-warning-700", icon: Clock3 },
   approved: { label: "Approved", className: "bg-success-50 text-success-700", icon: CheckCircle2 },
   partially_approved: {
     label: "Partially approved — some lines need fixing",

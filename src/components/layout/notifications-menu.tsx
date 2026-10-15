@@ -51,7 +51,7 @@ export function NotificationsMenu({
       >
         <Bell className="h-4.5 w-4.5" />
         {totalCount > 0 && (
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger-500" />
         )}
       </button>
 

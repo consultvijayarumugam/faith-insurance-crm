@@ -44,7 +44,7 @@ export function LocationRequirementToggle({ requireLocation }: { requireLocation
         {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         Save
       </Button>
-      {saved && !error && <span className="text-sm text-emerald-600">Saved.</span>}
+      {saved && !error && <span className="text-sm text-success-600">Saved.</span>}
       {error && <Alert variant="error">{error}</Alert>}
     </form>
   );

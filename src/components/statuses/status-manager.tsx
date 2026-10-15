@@ -160,12 +160,12 @@ function StatusRow({
           <p className="text-sm font-medium text-slate-900">{status.name}</p>
           <div className="mt-0.5 flex gap-1.5">
             {status.is_won && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              <span className="rounded-full bg-success-100 px-2 py-0.5 text-[11px] font-medium text-success-700">
                 Won
               </span>
             )}
             {status.is_lost && (
-              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+              <span className="rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-medium text-danger-700">
                 Lost
               </span>
             )}
@@ -173,7 +173,7 @@ function StatusRow({
         </div>
       </div>
 
-      {error && <p className="w-full text-xs text-rose-600">{error}</p>}
+      {error && <p className="w-full text-xs text-danger-600">{error}</p>}
 
       <div className="flex items-center gap-1">
         <Button
@@ -214,7 +214,7 @@ function StatusRow({
           onClick={handleDelete}
           aria-label="Delete"
         >
-          <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+          <Trash2 className="h-3.5 w-3.5 text-danger-600" />
         </Button>
       </div>
     </li>

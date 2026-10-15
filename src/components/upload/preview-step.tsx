@@ -75,7 +75,7 @@ export function PreviewStep({
                     <tr key={row.rowNumber} className="border-t border-slate-100">
                       <td className="px-4 py-2 text-slate-500">{row.rowNumber}</td>
                       <td className="px-4 py-2 text-slate-700">{row.preview}</td>
-                      <td className="px-4 py-2 text-rose-600">
+                      <td className="px-4 py-2 text-danger-600">
                         {row.errors.join("; ")}
                       </td>
                     </tr>
@@ -112,7 +112,7 @@ export function PreviewStep({
                       <td className="px-4 py-2 text-slate-700">
                         {row.data.mobile_number}
                       </td>
-                      <td className="px-4 py-2 text-amber-700">
+                      <td className="px-4 py-2 text-warning-700">
                         {row.duplicateReason}
                       </td>
                     </tr>

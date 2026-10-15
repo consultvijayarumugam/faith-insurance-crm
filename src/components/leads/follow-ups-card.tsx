@@ -19,9 +19,9 @@ import {
 } from "@/lib/actions/follow-ups";
 
 const STATUS_STYLES: Record<LeadFollowUp["status"], string> = {
-  pending: "bg-blue-50 text-blue-700 border-blue-200",
-  done: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  missed: "bg-rose-50 text-rose-700 border-rose-200",
+  pending: "bg-brand-50 text-brand-700 border-brand-200",
+  done: "bg-success-50 text-success-700 border-success-200",
+  missed: "bg-danger-50 text-danger-700 border-danger-200",
 };
 
 function splitDateTime(iso: string): { date: string; time: string } {
@@ -196,7 +196,7 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
                     <p className="flex items-center gap-2 text-sm font-medium text-slate-900">
                       {formatDateTime(f.scheduled_at)}
                       {isOverdue && (
-                        <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                        <span className="flex items-center gap-1 text-xs font-medium text-warning-600">
                           <AlertTriangle className="h-3 w-3" />
                           Overdue
                         </span>
@@ -243,7 +243,7 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
                       onClick={() => handleDelete(f.id)}
                       title="Delete"
                     >
-                      <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                      <Trash2 className="h-3.5 w-3.5 text-danger-500" />
                     </Button>
                   </div>
                 </li>

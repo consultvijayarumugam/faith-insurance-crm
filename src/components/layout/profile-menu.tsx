@@ -119,7 +119,7 @@ export function ProfileMenu({
             </div>
           ) : (
             <form onSubmit={handleSave} className="space-y-3">
-              {error && <p className="text-xs text-rose-600">{error}</p>}
+              {error && <p className="text-xs text-danger-600">{error}</p>}
               <div className="space-y-1.5">
                 <Label htmlFor="profile-name">Name</Label>
                 <Input id="profile-name" name="name" defaultValue={name} required />

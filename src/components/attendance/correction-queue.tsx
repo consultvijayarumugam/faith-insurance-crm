@@ -105,7 +105,7 @@ export function CorrectionQueue({
                     {pendingId === c.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <Check className="h-3.5 w-3.5 text-success-600" />
                     )}
                     Approve
                   </Button>
@@ -116,7 +116,7 @@ export function CorrectionQueue({
                     disabled={pendingId === c.id}
                     onClick={() => handleReview(c.id, "rejected")}
                   >
-                    <X className="h-3.5 w-3.5 text-rose-500" />
+                    <X className="h-3.5 w-3.5 text-danger-500" />
                     Reject
                   </Button>
                 </div>

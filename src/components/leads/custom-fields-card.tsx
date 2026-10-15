@@ -99,7 +99,7 @@ export function CustomFieldsCard({
                   <div key={def.id} className="space-y-1.5">
                     <Label htmlFor={name}>
                       {def.name}
-                      {def.is_required && <span className="text-rose-500"> *</span>}
+                      {def.is_required && <span className="text-danger-500"> *</span>}
                     </Label>
                     {def.field_type === "select" ? (
                       <Select id={name} name={name} defaultValue={defaultValue}>
