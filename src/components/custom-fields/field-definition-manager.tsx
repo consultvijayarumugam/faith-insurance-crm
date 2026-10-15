@@ -17,6 +17,7 @@ import {
   reorderFieldDefinition,
   deleteFieldDefinition,
 } from "@/lib/actions/custom-fields";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const FIELD_TYPE_LABELS: Record<LeadFieldType, string> = {
   text: "Text",
@@ -94,6 +95,7 @@ function FieldRow({
   isLast: boolean;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -125,8 +127,13 @@ function FieldRow({
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete the "${field.name}" field? Any values saved on leads will be deleted too.`))
-      return;
+    const ok = await confirm({
+      title: `Delete the "${field.name}" field?`,
+      description: "Any values saved on leads for this field will be deleted too.",
+      confirmLabel: "Delete field",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setPending(true);
     setError(null);
     const result = await deleteFieldDefinition(field.id);

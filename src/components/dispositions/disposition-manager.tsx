@@ -15,6 +15,7 @@ import {
   reorderDisposition,
   deleteDisposition,
 } from "@/lib/actions/dispositions";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 function DispositionFields({ defaultName = "" }: { defaultName?: string }) {
   return (
@@ -35,6 +36,7 @@ function DispositionRow({
   isLast: boolean;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -66,7 +68,12 @@ function DispositionRow({
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete the "${disposition.name}" disposition?`)) return;
+    const ok = await confirm({
+      title: `Delete the "${disposition.name}" disposition?`,
+      confirmLabel: "Delete",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setPending(true);
     setError(null);
     const result = await deleteDisposition(disposition.id);

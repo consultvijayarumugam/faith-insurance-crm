@@ -15,6 +15,7 @@ import {
   reorderLeadStatus,
   deleteLeadStatus,
 } from "@/lib/actions/statuses";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 function StatusFields({
   defaultName = "",
@@ -65,6 +66,7 @@ function StatusRow({
   isLast: boolean;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -96,7 +98,12 @@ function StatusRow({
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete the "${status.name}" status?`)) return;
+    const ok = await confirm({
+      title: `Delete the "${status.name}" status?`,
+      confirmLabel: "Delete",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setPending(true);
     setError(null);
     const result = await deleteLeadStatus(status.id);
