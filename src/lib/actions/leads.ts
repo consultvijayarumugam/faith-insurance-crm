@@ -315,6 +315,19 @@ export async function bulkImportLeads(
 
   const supabase = await createClient();
 
+  // This is an admin-only tool (the upload wizard only renders for admins),
+  // but unlike reassignLead/updateLead it has no per-row ownership check RLS
+  // could fall back on for enforcement — leads_insert's WITH CHECK allows
+  // agent_id = auth.uid(), so without this, a non-admin agent calling the
+  // action directly could self-import at bulk scale instead of one at a
+  // time via createLead. Check explicitly rather than rely on RLS here.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+  const { data: callerProfile } = await supabase.from("users").select("role").eq("id", user.id).single();
+  if (callerProfile?.role !== "admin") return { error: "Only admins can bulk-import leads." };
+
   const [{ data: agentRow }, { data: statuses }, { data: fieldDefinitions }] = await Promise.all([
     supabase.from("users").select("id").eq("id", agentId).eq("role", "agent").maybeSingle(),
     supabase.from("lead_statuses").select("id, name, sort_order").order("sort_order"),
