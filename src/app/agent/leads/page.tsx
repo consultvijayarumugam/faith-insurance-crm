@@ -6,20 +6,21 @@ import { LeadsTable } from "@/components/leads/leads-table";
 import { Button } from "@/components/ui/button";
 import type { Lead, LeadFieldDefinition, Tag } from "@/types";
 
-export default async function AgentLeadsPage({
-  searchParams,
-}: {
-  searchParams: {
-    status?: string;
-    product?: string;
-    from?: string;
-    to?: string;
-    followup?: string;
-    cf?: string;
-    cfv?: string;
-    tag?: string;
-  };
-}) {
+export default async function AgentLeadsPage(
+  props: {
+    searchParams: Promise<{
+      status?: string;
+      product?: string;
+      from?: string;
+      to?: string;
+      followup?: string;
+      cf?: string;
+      cfv?: string;
+      tag?: string;
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const supabase = await createClient();
 
   // Tags are fetched as a separate query below (not embedded here) so that a

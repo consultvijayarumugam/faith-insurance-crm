@@ -4,11 +4,12 @@ import { CalendarNav } from "@/components/calendar/calendar-nav";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import type { LeadFollowUpStatus } from "@/types";
 
-export default async function AdminCalendarPage({
-  searchParams,
-}: {
-  searchParams: { view?: string; date?: string; agent?: string };
-}) {
+export default async function AdminCalendarPage(
+  props: {
+    searchParams: Promise<{ view?: string; date?: string; agent?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const view = searchParams.view === "week" ? "week" : "month";
   const range = getCalendarRange(view, searchParams.date);
   const supabase = await createClient();

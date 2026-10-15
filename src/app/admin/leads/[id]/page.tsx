@@ -22,11 +22,12 @@ import type {
   Tag,
 } from "@/types";
 
-export default async function AdminLeadDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AdminLeadDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const supabase = await createClient();
 
   const [{ data: lead }, { data: statuses }, { data: agents }] = await Promise.all([

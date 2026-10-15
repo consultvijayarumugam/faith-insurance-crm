@@ -20,11 +20,12 @@ import type {
   Tag,
 } from "@/types";
 
-export default async function AgentLeadDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AgentLeadDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const supabase = await createClient();
 
   // RLS returns no row if this lead doesn't belong to the signed-in agent.

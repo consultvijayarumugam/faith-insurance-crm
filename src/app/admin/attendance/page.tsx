@@ -14,11 +14,12 @@ function currentMonth() {
   return new Date().toISOString().slice(0, 7); // "YYYY-MM"
 }
 
-export default async function AdminAttendancePage({
-  searchParams,
-}: {
-  searchParams: { month?: string; agent?: string };
-}) {
+export default async function AdminAttendancePage(
+  props: {
+    searchParams: Promise<{ month?: string; agent?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const month = searchParams.month || currentMonth();
   const [year, monthNum] = month.split("-").map(Number);
   const monthStart = `${month}-01`;

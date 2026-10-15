@@ -10,11 +10,12 @@ function currentMonth() {
   return new Date().toISOString().slice(0, 7); // "YYYY-MM"
 }
 
-export default async function AdminClosedCasesPage({
-  searchParams,
-}: {
-  searchParams: { month?: string; agent?: string };
-}) {
+export default async function AdminClosedCasesPage(
+  props: {
+    searchParams: Promise<{ month?: string; agent?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const month = searchParams.month || currentMonth();
   const monthStart = `${month}-01T00:00:00.000Z`;
   const [year, monthNum] = month.split("-").map(Number);

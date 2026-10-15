@@ -31,11 +31,12 @@ function defaultRange() {
   };
 }
 
-export default async function AdminPerformanceReportPage({
-  searchParams,
-}: {
-  searchParams: { start?: string; end?: string; agent?: string };
-}) {
+export default async function AdminPerformanceReportPage(
+  props: {
+    searchParams: Promise<{ start?: string; end?: string; agent?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { start: defaultStart, end: defaultEnd } = defaultRange();
   const start = searchParams.start || defaultStart;
   const end = searchParams.end || defaultEnd;
