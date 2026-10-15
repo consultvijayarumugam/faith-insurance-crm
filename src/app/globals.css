@@ -35,6 +35,16 @@ body {
   }
 }
 
+/* Native checkboxes are ~16px by default — too small to reliably tap on a
+ * phone. Sized up and given the brand color everywhere one appears,
+ * without needing a bespoke checkbox component per form. */
+input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
 /* Respect the OS/browser-level reduced-motion preference everywhere, not
  * just in hand-picked spots — any animation/transition collapses to a
  * near-instant state change instead of being disabled per-component. */

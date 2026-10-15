@@ -47,14 +47,7 @@ export function LoginForm() {
       {resetSuccess && (
         <Alert variant="success">Your password has been updated. Sign in below.</Alert>
       )}
-      {error && (
-        <div
-          role="alert"
-          className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-        >
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="error">{error}</Alert>}
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
