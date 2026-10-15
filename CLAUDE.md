@@ -248,6 +248,12 @@ const fetchLead = async (id: string): Promise<Lead> => { ... };
   the file's header if you write one). Read the file's own header comment
   before running it; some include a post-migration read-only verification
   query to run afterward.
+- After the migration itself commits, run `notify pgrst, 'reload schema';`
+  as its own statement in the SQL Editor. PostgREST (the layer Supabase's
+  client libraries talk to) caches the schema and can keep 404ing a
+  brand-new table/column, or ignore a new enum value, until it reloads —
+  it does reload on its own eventually, but don't rely on that timing if
+  you're about to test against the app right after running a migration.
 - When adding a new migration: write it against the *current live* schema
   (not just `schema.sql`), number it sequentially, and prefer additive,
   backfill-safe steps (add nullable → backfill → add constraint) over
