@@ -1,4 +1,4 @@
-import { hexToRgba } from "@/lib/utils";
+import { accessibleBadgeTextColor, hexToRgba } from "@/lib/utils";
 
 export function LeadStatusBadge({ status }: { status: { name: string; color: string } }) {
   return (
@@ -6,7 +6,7 @@ export function LeadStatusBadge({ status }: { status: { name: string; color: str
       className="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium"
       style={{
         backgroundColor: hexToRgba(status.color, 0.14),
-        color: status.color,
+        color: accessibleBadgeTextColor(status.color),
       }}
     >
       {status.name}

@@ -6,6 +6,16 @@
   --background: #f8fafc;
   --foreground: #0f172a;
   --border: #e2e8f0;
+
+  /* Semantic tokens — change these to retheme for a client. Values mirror
+   * Tailwind's emerald-600/amber-500/rose-600 so existing emerald/amber/
+   * rose utility classes stay visually consistent with success/warning/
+   * danger/brand/accent usage. */
+  --color-primary: #2563eb;
+  --color-accent: #0d9488;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #e11d48;
 }
 
 .dark {
@@ -22,5 +32,19 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Respect the OS/browser-level reduced-motion preference everywhere, not
+ * just in hand-picked spots — any animation/transition collapses to a
+ * near-instant state change instead of being disabled per-component. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
