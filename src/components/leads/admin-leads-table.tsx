@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Phone, Loader2 } from "lucide-react";
+import { Phone, Loader2, Contact, Plus } from "lucide-react";
 import type { Lead, Tag } from "@/types";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
 import { TagBadge } from "@/components/leads/tag-badge";
@@ -12,6 +12,7 @@ import { FollowUpCell, ProposalCell } from "@/components/leads/lead-table-cells"
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { bulkTagLeads } from "@/lib/actions/tags";
 
@@ -71,9 +72,19 @@ export function AdminLeadsTable({
 
   if (leads.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-        <p className="text-sm text-slate-500">No leads match these filters.</p>
-      </div>
+      <EmptyState
+        icon={Contact}
+        title="No leads match these filters"
+        description="Try clearing a filter, or add the first lead to get started."
+        action={
+          <Link href="/admin/leads/new">
+            <Button type="button" size="sm">
+              <Plus className="h-3.5 w-3.5" />
+              Add a lead
+            </Button>
+          </Link>
+        }
+      />
     );
   }
 
