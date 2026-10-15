@@ -12,6 +12,8 @@ import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
 import { formatDateTime } from "@/lib/format";
 import { createCallLog, deleteCallLog } from "@/lib/actions/call-logs";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -38,6 +40,8 @@ export function CallLogCard({
   dispositions: CallDisposition[];
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const { toast } = useToast();
   const [logging, setLogging] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -55,22 +59,31 @@ export function CallLogCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't log call", description: result.error, variant: "error" });
       return;
     }
     setLogging(false);
+    toast({ title: "Call logged", variant: "success" });
     router.refresh();
   }
 
   async function handleDelete(callLogId: string) {
-    if (!confirm("Delete this call log?")) return;
+    const ok = await confirm({
+      title: "Delete this call log?",
+      confirmLabel: "Delete",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setPending(true);
     setError(null);
     const result = await deleteCallLog(callLogId, leadId);
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't delete call log", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Call log deleted", variant: "success" });
     router.refresh();
   }
 

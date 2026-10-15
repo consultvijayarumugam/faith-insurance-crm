@@ -13,9 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { updateLead } from "@/lib/actions/leads";
+import { useToast } from "@/components/ui/toast";
 
 export function LeadInfoCard({ lead, statuses }: { lead: Lead; statuses: LeadStatusOption[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -26,14 +28,27 @@ export function LeadInfoCard({ lead, statuses }: { lead: Lead; statuses: LeadSta
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const wasWon = lead.status?.is_won ?? false;
+    const newStatusId = formData.get("status_id");
+    const newStatus = statuses.find((s) => s.id === newStatusId);
     const result = await updateLead(lead.id, formData);
 
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save changes", description: result.error, variant: "error" });
       return;
     }
     setEditing(false);
+    if (!wasWon && newStatus?.is_won) {
+      toast({
+        title: `🎉 ${lead.name} just converted!`,
+        description: "Nice work — this one's in the win column.",
+        variant: "success",
+      });
+    } else {
+      toast({ title: "Lead updated", variant: "success" });
+    }
     router.refresh();
   }
 

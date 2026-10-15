@@ -36,7 +36,7 @@ export function Alert({
     <div
       role={variant === "error" ? "alert" : undefined}
       className={cn(
-        "flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm",
+        "flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm animate-fade-in motion-reduce:animate-none",
         container,
         className
       )}

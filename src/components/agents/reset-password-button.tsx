@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { TempPasswordReveal } from "@/components/agents/temp-password-reveal";
 import { resetAgentPassword } from "@/lib/actions/agents";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { TempPasswordResult } from "@/types";
 
 export function ResetPasswordButton({
@@ -17,18 +18,18 @@ export function ResetPasswordButton({
   agentName: string;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<TempPasswordResult | null>(null);
 
   async function handleReset() {
-    if (
-      !confirm(
-        `Reset ${agentName}'s password? They'll need the new temporary password to sign in.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Reset ${agentName}'s password?`,
+      description: "They'll need the new temporary password to sign in.",
+      confirmLabel: "Reset password",
+    });
+    if (!ok) return;
     setPending(true);
     setError(null);
     const res = await resetAgentPassword(agentId);

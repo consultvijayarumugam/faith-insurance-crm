@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { accessibleBadgeBackgroundColor, cn } from "@/lib/utils";
 import type { LeadFieldDefinition, LeadStatusOption, Tag } from "@/types";
 
 export function LeadsFilters({
@@ -91,7 +91,7 @@ export function LeadsFilters({
                 "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 active ? "border-transparent text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               )}
-              style={active ? { backgroundColor: s.color } : undefined}
+              style={active ? { backgroundColor: accessibleBadgeBackgroundColor(s.color) } : undefined}
             >
               <span
                 className="h-1.5 w-1.5 rounded-full"
