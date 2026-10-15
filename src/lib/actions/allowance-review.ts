@@ -7,6 +7,23 @@ import {
   allowanceReopenReasonSchema,
   allowanceMarkPaidSchema,
 } from "@/lib/validations/allowance";
+import { isMissingRateError } from "@/lib/allowance";
+
+// Approving/rejecting/reopening an entry runs an UPDATE on
+// allowance_entries, which re-fires compute_allowance_entry_amount() for
+// every actor including admins — if the rate for that entry's vehicle type
+// has since been deleted, the raw Postgres exception would otherwise reach
+// the admin UI as-is. Surface a fix-it link instead.
+function entryUpdateError(message: string) {
+  if (isMissingRateError(message)) {
+    return {
+      error:
+        "No travel rate is configured for this entry's vehicle type, so the amount can't be recalculated. Add a rate in Allowance Settings, then try again.",
+      missingRate: true as const,
+    };
+  }
+  return { error: message };
+}
 
 function revalidateAllowancePaths() {
   revalidatePath("/agent/allowances");
@@ -28,7 +45,7 @@ async function requireAdmin() {
   return { supabase, adminId: user.id, error: null } as const;
 }
 
-export async function approveEntry(entryId: string) {
+export async function approveEntry(entryId: string): Promise<{ error?: string; missingRate?: boolean }> {
   const { supabase, adminId, error: authError } = await requireAdmin();
   if (authError) return { error: authError };
 
@@ -49,7 +66,7 @@ export async function approveEntry(entryId: string) {
       rejection_reason: null,
     })
     .eq("id", entryId);
-  if (error) return { error: error.message };
+  if (error) return entryUpdateError(error.message);
 
   await supabase.from("allowance_audit_log").insert({
     entity_type: "entry",
@@ -65,7 +82,10 @@ export async function approveEntry(entryId: string) {
   return {};
 }
 
-export async function rejectEntry(entryId: string, formData: FormData) {
+export async function rejectEntry(
+  entryId: string,
+  formData: FormData
+): Promise<{ error?: string; missingRate?: boolean }> {
   const { supabase, adminId, error: authError } = await requireAdmin();
   if (authError) return { error: authError };
 
@@ -89,7 +109,7 @@ export async function rejectEntry(entryId: string, formData: FormData) {
       rejection_reason: parsed.data.reason,
     })
     .eq("id", entryId);
-  if (error) return { error: error.message };
+  if (error) return entryUpdateError(error.message);
 
   await supabase.from("allowance_audit_log").insert({
     entity_type: "entry",
@@ -150,7 +170,10 @@ export async function markClaimPaid(claimId: string, formData: FormData) {
   return {};
 }
 
-export async function reopenClaim(claimId: string, formData: FormData) {
+export async function reopenClaim(
+  claimId: string,
+  formData: FormData
+): Promise<{ error?: string; missingRate?: boolean }> {
   const { supabase, adminId, error: authError } = await requireAdmin();
   if (authError) return { error: authError };
 
@@ -174,7 +197,7 @@ export async function reopenClaim(claimId: string, formData: FormData) {
     .update({ status: "submitted", reviewed_by: null, reviewed_at: null, rejection_reason: null })
     .eq("claim_id", claimId)
     .in("status", ["approved", "rejected"]);
-  if (entriesError) return { error: entriesError.message };
+  if (entriesError) return entryUpdateError(entriesError.message);
 
   const { error: claimError } = await supabase
     .from("allowance_claims")

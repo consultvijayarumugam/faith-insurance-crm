@@ -6,7 +6,14 @@ import {
   allowanceEntrySchema,
   allowanceExpenseSchema,
 } from "@/lib/validations/allowance";
-import { monthParamToDate } from "@/lib/allowance";
+import { isMissingRateError, monthParamToDate } from "@/lib/allowance";
+
+const MISSING_RATE_MESSAGE =
+  "Rates haven't been set up yet. Please ask your admin to add travel rates in Allowance Settings before you can save this entry.";
+
+function friendlyEntryError(message: string): string {
+  return isMissingRateError(message) ? MISSING_RATE_MESSAGE : message;
+}
 
 const RECEIPT_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
@@ -78,14 +85,14 @@ export async function upsertEntry(entryId: string | null, formData: FormData) {
 
   if (entryId) {
     const { error } = await supabase.from("allowance_entries").update(payload).eq("id", entryId);
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyEntryError(error.message) };
   } else {
     const { error } = await supabase
       .from("allowance_entries")
       .insert({ ...payload, claim_id: claim.id, agent_id: userId! });
     if (error) {
       if (error.code === "23505") return { error: "You already have an entry for this date — edit it instead." };
-      return { error: error.message };
+      return { error: friendlyEntryError(error.message) };
     }
   }
 
@@ -293,7 +300,7 @@ export async function resubmitEntry(entryId: string, formData: FormData) {
       rejection_reason: null,
     })
     .eq("id", entryId);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyEntryError(error.message) };
 
   await supabase.from("allowance_audit_log").insert({
     entity_type: "entry",

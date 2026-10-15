@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ClaimStatusBanner } from "@/components/allowance/claim-status-banner";
 import { EntryForm } from "@/components/allowance/entry-form";
@@ -74,6 +75,7 @@ export default async function AgentAllowancesPage(props: {
   })) as unknown as AllowanceEntry[];
 
   const hasDraftEntries = entries.some((e) => e.status === "draft");
+  const hasRates = (rates ?? []).length > 0;
 
   return (
     <div className="space-y-6">
@@ -101,8 +103,12 @@ export default async function AgentAllowancesPage(props: {
 
       <ClaimStatusBanner claim={claim as AllowanceClaim | null} />
 
-      {(!claim || claim.status === "draft") && (
-        <EntryForm mode="add" month={month} rates={(rates ?? []) as AllowanceRate[]} />
+      {!hasRates ? (
+        <Alert variant="info">Rates haven&apos;t been set up yet. Please ask your admin.</Alert>
+      ) : (
+        (!claim || claim.status === "draft") && (
+          <EntryForm mode="add" month={month} rates={(rates ?? []) as AllowanceRate[]} />
+        )
       )}
 
       {entries.length === 0 ? (

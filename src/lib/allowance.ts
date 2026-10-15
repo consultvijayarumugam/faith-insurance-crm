@@ -43,3 +43,10 @@ export const VEHICLE_TYPE_LABELS: Record<AllowanceVehicleType, string> = {
   car: "Car",
   other: "Other",
 };
+
+/** Matches the message raised by compute_allowance_entry_amount() in
+ * 0013_allowance_claims.sql ('No allowance rate configured for % on or
+ * before %') when an entry's vehicle type has no rate in effect yet. */
+export function isMissingRateError(message: string | null | undefined): boolean {
+  return !!message && message.startsWith("No allowance rate configured for");
+}

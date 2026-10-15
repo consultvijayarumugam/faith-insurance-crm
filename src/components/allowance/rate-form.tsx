@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash2 } from "lucide-react";
+import { Banknote, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { addAllowanceRate, deleteAllowanceRate } from "@/lib/actions/allowance-settings";
@@ -55,7 +56,13 @@ export function RateForm() {
       </div>
       <div className="w-40 space-y-1.5">
         <Label htmlFor="effective_from">Effective from</Label>
-        <Input id="effective_from" name="effective_from" type="date" required />
+        <Input
+          id="effective_from"
+          name="effective_from"
+          type="date"
+          required
+          defaultValue={new Date().toISOString().slice(0, 10)}
+        />
       </div>
       <Button type="submit" size="sm" variant="secondary" disabled={pending}>
         {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -91,7 +98,22 @@ export function RateHistoryTable({ rates }: { rates: AllowanceRate[] }) {
   }
 
   if (rates.length === 0) {
-    return <p className="text-sm text-slate-500">No rates configured yet.</p>;
+    return (
+      <EmptyState
+        icon={Banknote}
+        title="No rates configured yet"
+        description="Agents can't log travel entries until at least one rate is added per vehicle type they use."
+        action={
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => document.getElementById("rate_per_km")?.focus()}
+          >
+            Add your first rate
+          </Button>
+        }
+      />
+    );
   }
 
   return (

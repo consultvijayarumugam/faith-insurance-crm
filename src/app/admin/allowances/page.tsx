@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatMonthLabel } from "@/lib/format";
 import { getMonthIST } from "@/lib/allowance";
@@ -27,8 +28,9 @@ export default async function AdminAllowancesPage({
   const month = params.month ?? "";
   const supabase = await createClient();
 
-  const [{ data: agents }] = await Promise.all([
+  const [{ data: agents }, { count: rateCount }] = await Promise.all([
     supabase.from("users").select("id, name").eq("role", "agent").order("name"),
+    supabase.from("allowance_rates").select("id", { count: "exact", head: true }),
   ]);
 
   let query = supabase
@@ -65,6 +67,15 @@ export default async function AdminAllowancesPage({
           </Link>
         </div>
       </div>
+
+      {!rateCount && (
+        <Alert variant="warning">
+          <p>No travel rates are configured yet — agents won&apos;t be able to log entries until you add at least one.</p>
+          <Link href="/admin/allowances/settings" className="mt-1 inline-block font-medium underline">
+            Add your first rate
+          </Link>
+        </Alert>
+      )}
 
       <form className="flex flex-wrap items-end gap-3" method="get">
         <div className="w-40 space-y-1.5">

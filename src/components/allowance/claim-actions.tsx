@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,15 +78,18 @@ export function ReopenClaimForm({ claimId }: { claimId: string }) {
   const [reason, setReason] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [missingRate, setMissingRate] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
+    setMissingRate(false);
     const result = await reopenClaim(claimId, new FormData(e.currentTarget));
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      setMissingRate(!!result.missingRate);
       toast({ title: "Couldn't reopen claim", description: result.error, variant: "error" });
       return;
     }
@@ -105,7 +109,16 @@ export function ReopenClaimForm({ claimId }: { claimId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <Alert variant="error">
+          <p>{error}</p>
+          {missingRate && (
+            <Link href="/admin/allowances/settings" className="mt-1 inline-block font-medium underline">
+              Go to Allowance Settings
+            </Link>
+          )}
+        </Alert>
+      )}
       <Label htmlFor="reopen_reason">Reason for reopening</Label>
       <Textarea
         id="reopen_reason"
