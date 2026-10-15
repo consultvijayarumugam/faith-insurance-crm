@@ -26,7 +26,10 @@ const GRID_COLS = "8rem minmax(0,1fr) 3.5rem";
 function niceTicks(max: number, count: number): number[] {
   if (max <= 0) return [0];
   const step = max / count;
-  return Array.from({ length: count + 1 }, (_, i) => Math.round(step * i));
+  // Rounding each step to a whole number can collapse distinct ticks onto
+  // the same integer when max is small relative to count (e.g. max=2,
+  // count=4 rounds to [0,1,1,2,2]) — dedupe so no gridline/key repeats.
+  return Array.from(new Set(Array.from({ length: count + 1 }, (_, i) => Math.round(step * i))));
 }
 
 export function HorizontalBarChart({
