@@ -1,6 +1,7 @@
-import { Mail } from "lucide-react";
+import { Mail, Users } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { ResetPasswordButton } from "@/components/agents/reset-password-button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export interface AgentRow {
   id: string;
@@ -11,13 +12,7 @@ export interface AgentRow {
 
 export function AgentsList({ agents }: { agents: AgentRow[] }) {
   if (agents.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-        <p className="text-sm text-slate-500">
-          No agents yet. Invite your first one above.
-        </p>
-      </div>
-    );
+    return <EmptyState icon={Users} title="No agents yet" description="Invite your first one above." />;
   }
 
   return (

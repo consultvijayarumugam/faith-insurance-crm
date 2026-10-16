@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, X, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, X, Loader2, PhoneCall } from "lucide-react";
 import type { CallDisposition } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import {
   createDisposition,
   updateDisposition,
@@ -37,6 +39,7 @@ function DispositionRow({
 }) {
   const router = useRouter();
   const confirm = useConfirm();
+  const { toast } = useToast();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -49,8 +52,10 @@ function DispositionRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save disposition", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Disposition saved", variant: "success" });
     setEditing(false);
     router.refresh();
   }
@@ -62,8 +67,10 @@ function DispositionRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't reorder disposition", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Disposition reordered", variant: "success" });
     router.refresh();
   }
 
@@ -80,8 +87,10 @@ function DispositionRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't delete disposition", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Disposition deleted", variant: "success" });
     router.refresh();
   }
 
@@ -125,6 +134,7 @@ function DispositionRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={isFirst || pending}
           onClick={() => handleReorder("up")}
           aria-label="Move up"
@@ -135,6 +145,7 @@ function DispositionRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={isLast || pending}
           onClick={() => handleReorder("down")}
           aria-label="Move down"
@@ -145,6 +156,7 @@ function DispositionRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={pending}
           onClick={() => setEditing(true)}
           aria-label="Edit"
@@ -155,6 +167,7 @@ function DispositionRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={pending}
           onClick={handleDelete}
           aria-label="Delete"
@@ -168,6 +181,7 @@ function DispositionRow({
 
 export function DispositionManager({ dispositions }: { dispositions: CallDisposition[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [adding, setAdding] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -181,8 +195,10 @@ export function DispositionManager({ dispositions }: { dispositions: CallDisposi
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add disposition", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Disposition added", variant: "success" });
     formRef.current?.reset();
     setAdding(false);
     router.refresh();
@@ -190,16 +206,24 @@ export function DispositionManager({ dispositions }: { dispositions: CallDisposi
 
   return (
     <div className="space-y-4">
-      <ul className="space-y-2">
-        {dispositions.map((d, i) => (
-          <DispositionRow
-            key={d.id}
-            disposition={d}
-            isFirst={i === 0}
-            isLast={i === dispositions.length - 1}
-          />
-        ))}
-      </ul>
+      {dispositions.length === 0 && !adding ? (
+        <EmptyState
+          icon={PhoneCall}
+          title="No call dispositions yet"
+          description="Add your call outcomes below — agents pick one each time they log a call."
+        />
+      ) : (
+        <ul className="space-y-2">
+          {dispositions.map((d, i) => (
+            <DispositionRow
+              key={d.id}
+              disposition={d}
+              isFirst={i === 0}
+              isLast={i === dispositions.length - 1}
+            />
+          ))}
+        </ul>
+      )}
 
       {adding ? (
         <Card>

@@ -57,7 +57,7 @@ export function ResetPasswordButton({
   return (
     <div className="space-y-1.5">
       {error && <Alert variant="error">{error}</Alert>}
-      <Button type="button" size="sm" variant="ghost" onClick={handleReset} disabled={pending}>
+      <Button type="button" size="sm" className="min-h-11" variant="ghost" onClick={handleReset} disabled={pending}>
         {pending ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : (

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, X, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, X, Loader2, ListChecks } from "lucide-react";
 import type { LeadFieldDefinition, LeadFieldType } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import {
   createFieldDefinition,
   updateFieldDefinition,
@@ -96,6 +98,7 @@ function FieldRow({
 }) {
   const router = useRouter();
   const confirm = useConfirm();
+  const { toast } = useToast();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -108,8 +111,10 @@ function FieldRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save field", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Field saved", variant: "success" });
     setEditing(false);
     router.refresh();
   }
@@ -121,8 +126,10 @@ function FieldRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't reorder field", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Field reordered", variant: "success" });
     router.refresh();
   }
 
@@ -140,8 +147,10 @@ function FieldRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't delete field", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Field deleted", variant: "success" });
     router.refresh();
   }
 
@@ -205,6 +214,7 @@ function FieldRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={isFirst || pending}
           onClick={() => handleReorder("up")}
           aria-label="Move up"
@@ -215,6 +225,7 @@ function FieldRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={isLast || pending}
           onClick={() => handleReorder("down")}
           aria-label="Move down"
@@ -225,6 +236,7 @@ function FieldRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={pending}
           onClick={() => setEditing(true)}
           aria-label="Edit"
@@ -235,6 +247,7 @@ function FieldRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={pending}
           onClick={handleDelete}
           aria-label="Delete"
@@ -248,6 +261,7 @@ function FieldRow({
 
 export function FieldDefinitionManager({ fields }: { fields: LeadFieldDefinition[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [adding, setAdding] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -261,8 +275,10 @@ export function FieldDefinitionManager({ fields }: { fields: LeadFieldDefinition
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add field", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Field added", variant: "success" });
     formRef.current?.reset();
     setAdding(false);
     router.refresh();
@@ -271,9 +287,11 @@ export function FieldDefinitionManager({ fields }: { fields: LeadFieldDefinition
   return (
     <div className="space-y-4">
       {fields.length === 0 && !adding && (
-        <p className="text-sm text-slate-500">
-          No custom fields yet. Add one below — it will show up on every lead.
-        </p>
+        <EmptyState
+          icon={ListChecks}
+          title="No custom fields yet"
+          description="Add one below — it will show up on every lead."
+        />
       )}
 
       <ul className="space-y-2">

@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Tags as TagsIcon, Trash2 } from "lucide-react";
 import type { Tag } from "@/types";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { TagBadge } from "@/components/leads/tag-badge";
 import { deleteTag } from "@/lib/actions/tags";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -40,7 +41,13 @@ export function TagManager({ tags }: { tags: Tag[] }) {
   }
 
   if (tags.length === 0) {
-    return <p className="text-sm text-slate-500">No tags yet. Tags are created inline while tagging a lead.</p>;
+    return (
+      <EmptyState
+        icon={TagsIcon}
+        title="No tags yet"
+        description="Tags are created inline while tagging a lead."
+      />
+    );
   }
 
   return (
@@ -57,6 +64,7 @@ export function TagManager({ tags }: { tags: Tag[] }) {
               type="button"
               variant="ghost"
               size="icon"
+              className="h-11 w-11"
               disabled={pending === tag.id}
               onClick={() => handleDelete(tag)}
               aria-label={`Delete ${tag.name}`}
