@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/format";
 import { saveFieldValues } from "@/lib/actions/custom-fields";
 
@@ -37,6 +38,7 @@ export function CustomFieldsCard({
   values: LeadFieldValue[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -53,8 +55,10 @@ export function CustomFieldsCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save custom fields", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Custom fields saved", variant: "success" });
     setEditing(false);
     router.refresh();
   }

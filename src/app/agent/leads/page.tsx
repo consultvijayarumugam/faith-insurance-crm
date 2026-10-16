@@ -129,7 +129,7 @@ export default async function AgentLeadsPage(
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold tracking-tight text-slate-900">My Leads</h2>
         <Link href="/agent/leads/new">
-          <Button type="button" size="sm">
+          <Button type="button" size="sm" className="min-h-11">
             <Plus className="h-3.5 w-3.5" />
             New lead
           </Button>

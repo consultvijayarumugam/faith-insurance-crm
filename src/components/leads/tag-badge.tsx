@@ -16,7 +16,7 @@ export function TagBadge({ tag, onRemove }: { tag: Tag; onRemove?: () => void })
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${tag.name} tag`}
-          className="ml-0.5 rounded-full hover:opacity-70"
+          className="-m-1.5 ml-0.5 rounded-full p-1.5 hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           ×
         </button>

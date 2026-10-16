@@ -174,7 +174,7 @@ export function NewLeadForm({
           )}
 
           <div className="flex items-center gap-2 border-t border-slate-100 pt-5">
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" className="min-h-11" disabled={pending}>
               {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {pending ? "Creating…" : "Create lead"}
             </Button>

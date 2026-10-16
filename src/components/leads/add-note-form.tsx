@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { addNote } from "@/lib/actions/leads";
 
 export function AddNoteForm({ leadId }: { leadId: string }) {
   const router = useRouter();
+  const { toast } = useToast();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -27,22 +30,17 @@ export function AddNoteForm({ leadId }: { leadId: string }) {
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add note", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Note added", variant: "success" });
     formRef.current?.reset();
     router.refresh();
   }
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
-      {error && (
-        <div
-          role="alert"
-          className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700"
-        >
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="error">{error}</Alert>}
 
       <div className="space-y-1.5">
         <Label htmlFor="note_text">Add a note</Label>

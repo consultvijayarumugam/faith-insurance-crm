@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { formatDateTime } from "@/lib/format";
 import {
   scheduleFollowUp,
@@ -54,6 +55,7 @@ function ScheduleFields({ defaultDate, defaultTime, defaultNotes }: { defaultDat
 
 export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps: LeadFollowUp[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [scheduling, setScheduling] = React.useState(false);
@@ -74,8 +76,10 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't schedule follow-up", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Follow-up scheduled", variant: "success" });
     setScheduling(false);
     router.refresh();
   }
@@ -88,8 +92,10 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't reschedule follow-up", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Follow-up rescheduled", variant: "success" });
     setEditingId(null);
     router.refresh();
   }
@@ -101,8 +107,10 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't mark follow-up done", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Follow-up marked done", variant: "success" });
     router.refresh();
   }
 
@@ -113,8 +121,10 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't mark follow-up missed", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Follow-up marked missed", variant: "success" });
     router.refresh();
   }
 
@@ -125,8 +135,10 @@ export function FollowUpsCard({ leadId, followUps }: { leadId: string; followUps
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't delete follow-up", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Follow-up deleted", variant: "success" });
     router.refresh();
   }
 

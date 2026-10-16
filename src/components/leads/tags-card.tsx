@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { TagBadge } from "@/components/leads/tag-badge";
 import { createTag, tagLead, untagLead } from "@/lib/actions/tags";
 
@@ -24,6 +25,7 @@ export function TagsCard({
   allTags: Tag[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [creating, setCreating] = React.useState(false);
@@ -41,8 +43,10 @@ export function TagsCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't remove tag", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Tag removed", variant: "success" });
     router.refresh();
   }
 
@@ -54,8 +58,10 @@ export function TagsCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't apply tag", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Tag applied", variant: "success" });
     setSelectedExisting("");
     router.refresh();
   }
@@ -73,6 +79,7 @@ export function TagsCard({
     if ("error" in created && created.error) {
       setPending(false);
       setError(created.error);
+      toast({ title: "Couldn't create tag", description: created.error, variant: "error" });
       return;
     }
     if ("tag" in created && created.tag) {
@@ -80,6 +87,7 @@ export function TagsCard({
       if (result?.error) {
         setPending(false);
         setError(result.error);
+        toast({ title: "Couldn't apply new tag", description: result.error, variant: "error" });
         return;
       }
     }
@@ -88,6 +96,7 @@ export function TagsCard({
     setNewName("");
     setNewColor(DEFAULT_COLOR);
     setCreating(false);
+    toast({ title: "Tag created and applied", variant: "success" });
     router.refresh();
   }
 

@@ -72,7 +72,7 @@ export function LeadsFilters({
           type="button"
           onClick={() => updateParam("status", "")}
           className={cn(
-            "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+            "flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2",
             status === ""
               ? "border-brand-600 bg-brand-600 text-white"
               : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -88,7 +88,7 @@ export function LeadsFilters({
               type="button"
               onClick={() => updateParam("status", active ? "" : s.id)}
               className={cn(
-                "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                "flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2",
                 active ? "border-transparent text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               )}
               style={active ? { backgroundColor: accessibleBadgeBackgroundColor(s.color) } : undefined}
