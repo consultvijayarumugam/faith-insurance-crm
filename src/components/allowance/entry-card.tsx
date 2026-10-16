@@ -82,6 +82,7 @@ export function EntryCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add expense", description: result.error, variant: "error" });
       return;
     }
     setAddingExpense(false);

@@ -115,7 +115,22 @@ export default async function AgentAllowancesPage(props: {
         <EmptyState
           icon={Receipt}
           title="No entries yet this month"
-          description="Add your first travel entry above."
+          description={
+            hasRates && (!claim || claim.status === "draft")
+              ? "Fill in the form above to log your first travel entry."
+              : !hasRates
+                ? "Rates haven't been set up yet — ask your admin before you can log a travel entry."
+                : "This month's claim has already been submitted."
+          }
+          action={
+            hasRates && (!claim || claim.status === "draft") ? (
+              <a href="#entry-form">
+                <Button type="button" size="sm" className="min-h-11">
+                  Add an entry
+                </Button>
+              </a>
+            ) : undefined
+          }
         />
       ) : (
         <div className="space-y-3">

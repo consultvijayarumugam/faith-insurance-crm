@@ -30,6 +30,7 @@ export function RateForm() {
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add rate", description: result.error, variant: "error" });
       return;
     }
     toast({ title: "Rate added", variant: "success" });
@@ -117,39 +118,41 @@ export function RateHistoryTable({ rates }: { rates: AllowanceRate[] }) {
   }
 
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
-          <th className="py-2 pr-4">Vehicle</th>
-          <th className="py-2 pr-4">Rate / km</th>
-          <th className="py-2 pr-4">Effective from</th>
-          <th className="py-2" />
-        </tr>
-      </thead>
-      <tbody>
-        {rates.map((r) => (
-          <tr key={r.id} className="border-b border-slate-100 last:border-0">
-            <td className="py-2 pr-4 text-slate-700">{VEHICLE_TYPE_LABELS[r.vehicle_type]}</td>
-            <td className="py-2 pr-4 tabular-nums text-slate-700">{formatCurrency(r.rate_per_km)}</td>
-            <td className="py-2 pr-4 text-slate-700">{formatDate(r.effective_from)}</td>
-            <td className="py-2 text-right">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => handleDelete(r)}
-                disabled={pendingId === r.id}
-              >
-                {pendingId === r.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3.5 w-3.5 text-danger-600" />
-                )}
-              </Button>
-            </td>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+            <th className="py-2 pr-4">Vehicle</th>
+            <th className="py-2 pr-4">Rate / km</th>
+            <th className="py-2 pr-4">Effective from</th>
+            <th className="py-2" />
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rates.map((r) => (
+            <tr key={r.id} className="border-b border-slate-100 last:border-0">
+              <td className="py-2 pr-4 text-slate-700">{VEHICLE_TYPE_LABELS[r.vehicle_type]}</td>
+              <td className="py-2 pr-4 tabular-nums text-slate-700">{formatCurrency(r.rate_per_km)}</td>
+              <td className="py-2 pr-4 text-slate-700">{formatDate(r.effective_from)}</td>
+              <td className="py-2 text-right">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDelete(r)}
+                  disabled={pendingId === r.id}
+                >
+                  {pendingId === r.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5 text-danger-600" />
+                  )}
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

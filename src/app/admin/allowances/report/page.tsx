@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft, Contact, IndianRupee, MapPin } from "lucide-react";
+import { ArrowLeft, Contact, FileBarChart, IndianRupee, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HorizontalBarChart, type BarDatum } from "@/components/charts/horizontal-bar-chart";
 import { ExportAllowanceCsvButton } from "@/components/allowance/export-csv-button";
 import { buildMonthlyAgentTotals } from "@/lib/actions/allowance-reports";
@@ -77,7 +78,11 @@ export default async function AllowanceReportPage() {
         <CardContent className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-900">Month-on-month</h3>
           {rows.length === 0 ? (
-            <p className="text-sm text-slate-500">No claims to report on yet.</p>
+            <EmptyState
+              icon={FileBarChart}
+              title="No claims to report on yet"
+              description="This fills in once agents submit and admins review allowance claims."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

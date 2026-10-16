@@ -46,6 +46,7 @@ export default async function AdminAllowancesPage({
   const { data: claims } = await query;
 
   const agentNames = new Map((agents ?? []).map((a) => [a.id, a.name]));
+  const hasFilters = Boolean(month || params.agent || params.status);
 
   return (
     <div className="space-y-6">
@@ -111,13 +112,26 @@ export default async function AdminAllowancesPage({
             <option value="paid">Paid</option>
           </Select>
         </div>
-        <Button type="submit" size="sm" variant="secondary">
+        <Button type="submit" size="sm" className="min-h-11" variant="secondary">
           Filter
         </Button>
       </form>
 
       {!claims || claims.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="No claims match these filters" />
+        <EmptyState
+          icon={ClipboardList}
+          title="No claims match these filters"
+          description={hasFilters ? "Try clearing a filter to see more claims." : "Nothing submitted yet."}
+          action={
+            hasFilters ? (
+              <Link href="/admin/allowances">
+                <Button type="button" size="sm" className="min-h-11" variant="secondary">
+                  Clear filters
+                </Button>
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="space-y-2">
           {claims.map((c) => (

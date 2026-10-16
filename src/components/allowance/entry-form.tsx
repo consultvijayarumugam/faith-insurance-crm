@@ -78,7 +78,11 @@ export function EntryForm({
   }, [month]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+    <form
+      id={mode === "add" ? "entry-form" : undefined}
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-xl border border-slate-200 bg-white p-4"
+    >
       {error && <Alert variant="error">{error}</Alert>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
