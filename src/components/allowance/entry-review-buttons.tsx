@@ -78,10 +78,10 @@ export function EntryReviewButtons({ entryId }: { entryId: string }) {
           onChange={(e) => setReason(e.target.value)}
         />
         <div className="flex gap-2">
-          <Button type="button" size="sm" variant="destructive" onClick={handleReject} disabled={pending || !reason.trim()}>
+          <Button type="button" size="sm" className="min-h-11" variant="destructive" onClick={handleReject} disabled={pending || !reason.trim()}>
             {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Confirm reject"}
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={() => setRejecting(false)} disabled={pending}>
+          <Button type="button" size="sm" className="min-h-11" variant="ghost" onClick={() => setRejecting(false)} disabled={pending}>
             Cancel
           </Button>
         </div>
@@ -93,11 +93,11 @@ export function EntryReviewButtons({ entryId }: { entryId: string }) {
     <div className="w-full space-y-2">
       {errorAlert}
       <div className="flex items-center gap-2">
-        <Button type="button" size="sm" variant="secondary" onClick={handleApprove} disabled={pending}>
+        <Button type="button" size="sm" className="min-h-11" variant="secondary" onClick={handleApprove} disabled={pending}>
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 text-success-600" />}
           Approve
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => setRejecting(true)} disabled={pending}>
+        <Button type="button" size="sm" className="min-h-11" variant="ghost" onClick={() => setRejecting(true)} disabled={pending}>
           <X className="h-3.5 w-3.5 text-danger-500" />
           Reject
         </Button>

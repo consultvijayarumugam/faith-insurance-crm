@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Select } from "@/components/ui/select";
+import { useToast } from "@/components/ui/toast";
 import { reassignLead } from "@/lib/actions/leads";
 
 export function ReassignSelect({
@@ -16,6 +17,7 @@ export function ReassignSelect({
   currentAgentId: string;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [value, setValue] = React.useState(currentAgentId);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -33,8 +35,11 @@ export function ReassignSelect({
     if (result?.error) {
       setError(result.error);
       setValue(previous);
+      toast({ title: "Couldn't reassign lead", description: result.error, variant: "error" });
       return;
     }
+    const newAgentName = agents.find((a) => a.id === newAgentId)?.name ?? "the new agent";
+    toast({ title: `Reassigned to ${newAgentName}`, variant: "success" });
     router.refresh();
   }
 
@@ -44,7 +49,7 @@ export function ReassignSelect({
         value={value}
         onChange={handleChange}
         disabled={pending}
-        className="h-8 py-0 text-xs"
+        className="h-11 text-xs"
       >
         {agents.map((a) => (
           <option key={a.id} value={a.id}>
@@ -58,7 +63,7 @@ export function ReassignSelect({
           Reassigning…
         </p>
       )}
-      {error && <p className="text-xs text-rose-600">{error}</p>}
+      {error && <p className="text-xs text-danger-600">{error}</p>}
     </div>
   );
 }

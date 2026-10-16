@@ -45,7 +45,7 @@ export default async function AgentLayout({
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar role="agent" />
-      <div className="flex flex-1 flex-col pb-14 md:pb-0">
+      <div className="flex min-w-0 flex-1 flex-col pb-14 md:pb-0">
         <Topbar
           role="agent"
           id={profile.id}

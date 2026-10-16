@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { bulkTagLeads } from "@/lib/actions/tags";
 
@@ -37,6 +38,7 @@ export function AdminLeadsTable({
   allTags?: Tag[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [tagId, setTagId] = React.useState("");
   const [applying, setApplying] = React.useState(false);
@@ -63,8 +65,10 @@ export function AdminLeadsTable({
     setApplying(false);
     if ("error" in result) {
       setError(result.error);
+      toast({ title: "Couldn't apply tag", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Tag applied", variant: "success" });
     setSelected(new Set());
     setTagId("");
     router.refresh();
@@ -78,7 +82,7 @@ export function AdminLeadsTable({
         description="Try clearing a filter, or add the first lead to get started."
         action={
           <Link href="/admin/leads/new">
-            <Button type="button" size="sm">
+            <Button type="button" size="sm" className="min-h-11">
               <Plus className="h-3.5 w-3.5" />
               Add a lead
             </Button>
@@ -100,7 +104,7 @@ export function AdminLeadsTable({
           <Select
             value={tagId}
             onChange={(e) => setTagId(e.target.value)}
-            className="h-8 w-44 py-0 text-xs"
+            className="h-11 w-44 text-xs"
           >
             <option value="">Choose a tag…</option>
             {allTags.map((t) => (
@@ -109,11 +113,11 @@ export function AdminLeadsTable({
               </option>
             ))}
           </Select>
-          <Button type="button" size="sm" disabled={!tagId || applying} onClick={handleApplyTag}>
+          <Button type="button" size="sm" className="min-h-11" disabled={!tagId || applying} onClick={handleApplyTag}>
             {applying && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Apply tag
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+          <Button type="button" size="sm" className="min-h-11" variant="ghost" onClick={() => setSelected(new Set())}>
             Clear
           </Button>
         </div>

@@ -13,7 +13,7 @@ export const buttonVariants = cva(
         outline:
           "border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 active:bg-slate-100",
         ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200",
-        destructive: "bg-rose-600 text-white shadow-soft hover:bg-rose-700 active:bg-rose-800",
+        destructive: "bg-danger-600 text-white shadow-soft hover:bg-danger-700 active:bg-danger-800",
       },
       size: {
         sm: "h-8 px-3 text-xs",

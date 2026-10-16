@@ -197,7 +197,7 @@ export function CallLogCard({
                   onClick={() => handleDelete(log.id)}
                   title="Delete"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                  <Trash2 className="h-3.5 w-3.5 text-danger-500" />
                 </Button>
               </li>
             ))}

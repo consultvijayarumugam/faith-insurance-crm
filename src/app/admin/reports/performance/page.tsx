@@ -1,4 +1,4 @@
-import { Phone, Clock, Timer, AlertTriangle } from "lucide-react";
+import { Phone, Clock, Timer, AlertTriangle, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/ui/stat-card";
 import { HorizontalBarChart, type BarDatum } from "@/components/charts/horizontal-bar-chart";
@@ -7,6 +7,7 @@ import { PerformanceReportFilters } from "@/components/reports/performance-repor
 import { ThresholdForm } from "@/components/reports/threshold-form";
 import { ExportCsvButton } from "@/components/reports/export-csv-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatDurationHuman } from "@/lib/format";
 import {
   buildAgentPerformanceRows,
@@ -179,7 +180,7 @@ export default async function AdminPerformanceReportPage(
         <CardContent className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-900">By agent</h3>
           {agentRows.length === 0 ? (
-            <p className="text-sm text-slate-500">No agents yet.</p>
+            <EmptyState icon={Users} title="No agents yet" description="Invite one from the Agents tab." />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -211,11 +212,11 @@ export default async function AdminPerformanceReportPage(
                       <td className="py-2 pr-4 tabular-nums text-slate-700">{r.longCount}</td>
                       <td className="py-2">
                         {r.belowThreshold ? (
-                          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
+                          <span className="rounded-full bg-danger-50 px-2 py-0.5 text-xs font-medium text-danger-700">
                             Below target
                           </span>
                         ) : (
-                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700">
                             On target
                           </span>
                         )}

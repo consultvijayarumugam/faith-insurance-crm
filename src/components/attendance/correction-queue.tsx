@@ -6,6 +6,7 @@ import { Check, Loader2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { reviewCorrection } from "@/lib/actions/attendance";
 import { LocationCell } from "@/components/attendance/location-cell";
@@ -33,6 +34,7 @@ export function CorrectionQueue({
   sessionLocations?: Map<string, CorrectionSessionLocation>;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -43,8 +45,10 @@ export function CorrectionQueue({
     setPendingId(null);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't review request", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: decision === "approved" ? "Correction approved" : "Correction rejected", variant: "success" });
     router.refresh();
   }
 
@@ -98,6 +102,7 @@ export function CorrectionQueue({
                   <Button
                     type="button"
                     size="sm"
+                    className="min-h-11"
                     variant="secondary"
                     disabled={pendingId === c.id}
                     onClick={() => handleReview(c.id, "approved")}
@@ -105,18 +110,19 @@ export function CorrectionQueue({
                     {pendingId === c.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <Check className="h-3.5 w-3.5 text-success-600" />
                     )}
                     Approve
                   </Button>
                   <Button
                     type="button"
                     size="sm"
+                    className="min-h-11"
                     variant="ghost"
                     disabled={pendingId === c.id}
                     onClick={() => handleReview(c.id, "rejected")}
                   >
-                    <X className="h-3.5 w-3.5 text-rose-500" />
+                    <X className="h-3.5 w-3.5 text-danger-500" />
                     Reject
                   </Button>
                 </div>

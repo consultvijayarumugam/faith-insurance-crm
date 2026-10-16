@@ -7,29 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { updateRetentionSetting } from "@/lib/actions/retention";
 import type { RetentionSetting } from "@/types";
 
 export function RetentionSettingsForm({ setting }: { setting: RetentionSetting }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [years, setYears] = React.useState(setting.years);
   const [dryRun, setDryRun] = React.useState(setting.dry_run);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [saved, setSaved] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    setSaved(false);
     const result = await updateRetentionSetting(new FormData(e.currentTarget));
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save retention setting", description: result.error, variant: "error" });
       return;
     }
-    setSaved(true);
+    toast({ title: "Retention setting saved", variant: "success" });
     router.refresh();
   }
 
@@ -68,7 +69,6 @@ export function RetentionSettingsForm({ setting }: { setting: RetentionSetting }
           {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           Save
         </Button>
-        {saved && !error && <span className="text-sm text-emerald-600">Saved.</span>}
       </div>
       {!dryRun && (
         <Alert variant="warning">

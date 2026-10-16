@@ -72,7 +72,7 @@ export function MappingStep({
             <div key={field} className="space-y-1.5">
               <Label htmlFor={`map-${field}`}>
                 {FIELD_LABELS[field]}
-                {required && <span className="text-rose-500"> *</span>}
+                {required && <span className="text-danger-500"> *</span>}
               </Label>
               <Select
                 id={`map-${field}`}

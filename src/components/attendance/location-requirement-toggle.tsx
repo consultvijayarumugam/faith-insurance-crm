@@ -5,27 +5,28 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { updateAttendanceLocationSetting } from "@/lib/actions/settings";
 
 export function LocationRequirementToggle({ requireLocation }: { requireLocation: boolean }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [checked, setChecked] = React.useState(requireLocation);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [saved, setSaved] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    setSaved(false);
     const result = await updateAttendanceLocationSetting(new FormData(e.currentTarget));
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save setting", description: result.error, variant: "error" });
       return;
     }
-    setSaved(true);
+    toast({ title: "Setting saved", variant: "success" });
     router.refresh();
   }
 
@@ -40,11 +41,10 @@ export function LocationRequirementToggle({ requireLocation }: { requireLocation
         />
         Require location to punch in/out
       </label>
-      <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+      <Button type="submit" size="sm" className="min-h-11" variant="secondary" disabled={pending}>
         {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         Save
       </Button>
-      {saved && !error && <span className="text-sm text-emerald-600">Saved.</span>}
       {error && <Alert variant="error">{error}</Alert>}
     </form>
   );

@@ -4,6 +4,7 @@ import * as React from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import type { TempPasswordResult } from "@/types";
 
 export function TempPasswordReveal({
@@ -15,13 +16,25 @@ export function TempPasswordReveal({
   heading: string;
   onDone: () => void;
 }) {
+  const { toast } = useToast();
   const [copied, setCopied] = React.useState(false);
+  const [copyFailed, setCopyFailed] = React.useState(false);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(
-      `Email: ${result.email}\nTemporary password: ${result.tempPassword}`
-    );
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(
+        `Email: ${result.email}\nTemporary password: ${result.tempPassword}`
+      );
+      setCopied(true);
+      setCopyFailed(false);
+    } catch {
+      setCopyFailed(true);
+      toast({
+        title: "Couldn't copy to clipboard",
+        description: "Select the credentials above manually and copy them yourself.",
+        variant: "error",
+      });
+    }
   }
 
   return (
@@ -43,6 +56,12 @@ export function TempPasswordReveal({
         This password won&apos;t be shown again. Share it with {result.name} securely —
         they can sign in with it right away.
       </Alert>
+
+      {copyFailed && (
+        <Alert variant="error">
+          Couldn&apos;t copy automatically — select the credentials above and copy them manually.
+        </Alert>
+      )}
 
       <div className="flex gap-2">
         <Button type="button" onClick={handleCopy}>

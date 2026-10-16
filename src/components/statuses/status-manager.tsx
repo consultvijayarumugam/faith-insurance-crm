@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, X, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, X, Loader2, ListChecks } from "lucide-react";
 import type { LeadStatusOption } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import {
   createLeadStatus,
   updateLeadStatus,
@@ -67,6 +69,7 @@ function StatusRow({
 }) {
   const router = useRouter();
   const confirm = useConfirm();
+  const { toast } = useToast();
   const [editing, setEditing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -79,8 +82,10 @@ function StatusRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save status", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Status saved", variant: "success" });
     setEditing(false);
     router.refresh();
   }
@@ -92,8 +97,10 @@ function StatusRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't reorder status", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Status reordered", variant: "success" });
     router.refresh();
   }
 
@@ -110,8 +117,10 @@ function StatusRow({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't delete status", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Status deleted", variant: "success" });
     router.refresh();
   }
 
@@ -160,12 +169,12 @@ function StatusRow({
           <p className="text-sm font-medium text-slate-900">{status.name}</p>
           <div className="mt-0.5 flex gap-1.5">
             {status.is_won && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              <span className="rounded-full bg-success-100 px-2 py-0.5 text-[11px] font-medium text-success-700">
                 Won
               </span>
             )}
             {status.is_lost && (
-              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+              <span className="rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-medium text-danger-700">
                 Lost
               </span>
             )}
@@ -173,13 +182,14 @@ function StatusRow({
         </div>
       </div>
 
-      {error && <p className="w-full text-xs text-rose-600">{error}</p>}
+      {error && <p className="w-full text-xs text-danger-600">{error}</p>}
 
       <div className="flex items-center gap-1">
         <Button
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={isFirst || pending}
           onClick={() => handleReorder("up")}
           aria-label="Move up"
@@ -190,6 +200,7 @@ function StatusRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={isLast || pending}
           onClick={() => handleReorder("down")}
           aria-label="Move down"
@@ -200,6 +211,7 @@ function StatusRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={pending}
           onClick={() => setEditing(true)}
           aria-label="Edit"
@@ -210,11 +222,12 @@ function StatusRow({
           type="button"
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           disabled={pending}
           onClick={handleDelete}
           aria-label="Delete"
         >
-          <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+          <Trash2 className="h-3.5 w-3.5 text-danger-600" />
         </Button>
       </div>
     </li>
@@ -223,6 +236,7 @@ function StatusRow({
 
 export function StatusManager({ statuses }: { statuses: LeadStatusOption[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [adding, setAdding] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -236,8 +250,10 @@ export function StatusManager({ statuses }: { statuses: LeadStatusOption[] }) {
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add status", description: result.error, variant: "error" });
       return;
     }
+    toast({ title: "Status added", variant: "success" });
     formRef.current?.reset();
     setAdding(false);
     router.refresh();
@@ -245,16 +261,24 @@ export function StatusManager({ statuses }: { statuses: LeadStatusOption[] }) {
 
   return (
     <div className="space-y-4">
-      <ul className="space-y-2">
-        {statuses.map((status, i) => (
-          <StatusRow
-            key={status.id}
-            status={status}
-            isFirst={i === 0}
-            isLast={i === statuses.length - 1}
-          />
-        ))}
-      </ul>
+      {statuses.length === 0 && !adding ? (
+        <EmptyState
+          icon={ListChecks}
+          title="No lead statuses yet"
+          description="Add your pipeline stages below — new leads can't be created without at least one."
+        />
+      ) : (
+        <ul className="space-y-2">
+          {statuses.map((status, i) => (
+            <StatusRow
+              key={status.id}
+              status={status}
+              isFirst={i === 0}
+              isLast={i === statuses.length - 1}
+            />
+          ))}
+        </ul>
+      )}
 
       {adding ? (
         <Card>

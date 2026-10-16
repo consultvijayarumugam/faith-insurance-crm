@@ -16,8 +16,8 @@ export function StatCard({
   const accentClasses: Record<string, string> = {
     brand: "bg-brand-50 text-brand-700",
     accent: "bg-accent-50 text-accent-700",
-    emerald: "bg-emerald-50 text-emerald-700",
-    rose: "bg-rose-50 text-rose-700",
+    emerald: "bg-success-50 text-success-700",
+    rose: "bg-danger-50 text-danger-700",
   };
 
   return (

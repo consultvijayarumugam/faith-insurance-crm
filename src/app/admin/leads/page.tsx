@@ -138,13 +138,13 @@ export default async function AdminLeadsPage(
         <h2 className="text-lg font-semibold tracking-tight text-slate-900">Leads</h2>
         <div className="flex items-center gap-2">
           <Link href="/admin/upload">
-            <Button type="button" variant="secondary" size="sm">
+            <Button type="button" variant="secondary" size="sm" className="min-h-11">
               <UploadCloud className="h-3.5 w-3.5" />
               Bulk upload
             </Button>
           </Link>
           <Link href="/admin/leads/new">
-            <Button type="button" size="sm">
+            <Button type="button" size="sm" className="min-h-11">
               <Plus className="h-3.5 w-3.5" />
               New lead
             </Button>

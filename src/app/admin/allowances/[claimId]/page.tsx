@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, AlertTriangle, FileText } from "lucide-react";
+import { ArrowLeft, AlertTriangle, FileText, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { EntryReviewButtons } from "@/components/allowance/entry-review-buttons";
 import { MarkPaidForm, ReopenClaimForm } from "@/components/allowance/claim-actions";
 import { formatCurrency, formatDate, formatMonthLabel } from "@/lib/format";
@@ -16,7 +17,7 @@ import type { AllowanceEntry, AllowanceSettings } from "@/types";
 
 const STATUS_BADGE: Record<string, string> = {
   draft: "bg-slate-100 text-slate-600",
-  submitted: "bg-amber-50 text-amber-700",
+  submitted: "bg-warning-50 text-warning-700",
   approved: "bg-success-50 text-success-700",
   partially_approved: "bg-warning-50 text-warning-700",
   rejected: "bg-danger-50 text-danger-700",
@@ -120,6 +121,10 @@ export default async function AdminClaimDetailPage(props: { params: Promise<{ cl
         <p className="text-sm text-slate-500">
           Paid {claim.paid_at ? formatDate(claim.paid_at) : ""} · Ref: {claim.payment_reference}
         </p>
+      )}
+
+      {entries.length === 0 && (
+        <EmptyState icon={Receipt} title="No entries on this claim" description="There's nothing to review here yet." />
       )}
 
       <div className="space-y-3">

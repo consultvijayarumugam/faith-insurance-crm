@@ -7,26 +7,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { updatePerformanceThreshold } from "@/lib/actions/settings";
 
 export function ThresholdForm({ minCallsPerWeek }: { minCallsPerWeek: number }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [saved, setSaved] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    setSaved(false);
     const result = await updatePerformanceThreshold(new FormData(e.currentTarget));
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save target", description: result.error, variant: "error" });
       return;
     }
-    setSaved(true);
+    toast({ title: "Target saved", variant: "success" });
     router.refresh();
   }
 
@@ -47,7 +48,6 @@ export function ThresholdForm({ minCallsPerWeek }: { minCallsPerWeek: number }) 
         {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         Save
       </Button>
-      {saved && !error && <span className="text-sm text-emerald-600">Saved.</span>}
       {error && <Alert variant="error">{error}</Alert>}
     </form>
   );

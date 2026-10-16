@@ -24,7 +24,7 @@ import type { AllowanceEntry, AllowanceRate } from "@/types";
 
 const STATUS_BADGE: Record<string, string> = {
   draft: "bg-slate-100 text-slate-600",
-  submitted: "bg-amber-50 text-amber-700",
+  submitted: "bg-warning-50 text-warning-700",
   approved: "bg-success-50 text-success-700",
   rejected: "bg-danger-50 text-danger-700",
 };
@@ -82,6 +82,7 @@ export function EntryCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't add expense", description: result.error, variant: "error" });
       return;
     }
     setAddingExpense(false);

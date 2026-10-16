@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Contact, CheckCircle2, Wallet, Users, CalendarClock, PhoneCall, TrendingDown, ClipboardList } from "lucide-react";
+import { Contact, CheckCircle2, Wallet, Users, CalendarClock, PhoneCall, TrendingDown, ClipboardList, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatCurrency } from "@/lib/format";
@@ -31,6 +31,7 @@ export default async function AdminDashboardPage() {
     { count: callsToday },
     { count: conversionsThisMonth },
     { count: pendingCorrections },
+    { count: pendingAllowanceClaims },
     { data: weekCallLogs },
     { data: thresholdSetting },
   ] = await Promise.all([
@@ -58,6 +59,7 @@ export default async function AdminDashboardPage() {
       .from("attendance_corrections")
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
+    supabase.from("allowance_claims").select("id", { count: "exact", head: true }).eq("status", "submitted"),
     supabase.from("call_logs").select("agent_id, duration_seconds").gte("started_at", weekStart.toISOString()),
     supabase.from("app_settings").select("value").eq("key", "performance_threshold").maybeSingle(),
   ]);
@@ -134,7 +136,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       <GreetingHeader name={profile?.name ?? "there"} />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-soft">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-700">
             <PhoneCall className="h-4 w-4" />
@@ -175,6 +177,18 @@ export default async function AdminDashboardPage() {
           <div className="min-w-0">
             <p className="text-xs text-slate-400">Pending corrections</p>
             <p className="text-sm font-semibold text-slate-900">{pendingCorrections ?? 0}</p>
+          </div>
+        </Link>
+        <Link
+          href="/admin/allowances?status=submitted"
+          className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-soft transition-colors hover:bg-slate-50"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning-50 text-warning-600">
+            <Receipt className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs text-slate-400">Allowance claims to review</p>
+            <p className="text-sm font-semibold text-slate-900">{pendingAllowanceClaims ?? 0}</p>
           </div>
         </Link>
       </div>

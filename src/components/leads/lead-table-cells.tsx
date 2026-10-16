@@ -13,7 +13,7 @@ export function FollowUpCell({ date }: { date: string | null }) {
     <span
       className={cn(
         "text-sm",
-        isDueOrOverdue ? "font-medium text-amber-700" : "text-slate-600"
+        isDueOrOverdue ? "font-medium text-warning-700" : "text-slate-600"
       )}
     >
       {formatDate(date)}

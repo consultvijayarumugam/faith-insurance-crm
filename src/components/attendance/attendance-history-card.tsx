@@ -4,9 +4,9 @@ import { LocationCell } from "@/components/attendance/location-cell";
 import type { AttendanceCorrection, AttendanceSession } from "@/types";
 
 const STATUS_BADGE: Record<AttendanceCorrection["status"], string> = {
-  pending: "bg-amber-50 text-amber-700",
-  approved: "bg-emerald-50 text-emerald-700",
-  rejected: "bg-rose-50 text-rose-700",
+  pending: "bg-warning-50 text-warning-700",
+  approved: "bg-success-50 text-success-700",
+  rejected: "bg-danger-50 text-danger-700",
 };
 
 export function AttendanceHistoryCard({

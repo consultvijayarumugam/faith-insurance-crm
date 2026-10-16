@@ -26,6 +26,7 @@ export function AllowanceSettingsForm({ settings }: { settings: AllowanceSetting
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't save settings", description: result.error, variant: "error" });
       return;
     }
     toast({ title: "Settings saved", variant: "success" });
