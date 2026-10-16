@@ -1,4 +1,4 @@
-import { Phone, Clock, Timer, AlertTriangle } from "lucide-react";
+import { Phone, Clock, Timer, AlertTriangle, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/ui/stat-card";
 import { HorizontalBarChart, type BarDatum } from "@/components/charts/horizontal-bar-chart";
@@ -7,6 +7,7 @@ import { PerformanceReportFilters } from "@/components/reports/performance-repor
 import { ThresholdForm } from "@/components/reports/threshold-form";
 import { ExportCsvButton } from "@/components/reports/export-csv-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatDurationHuman } from "@/lib/format";
 import {
   buildAgentPerformanceRows,
@@ -179,7 +180,7 @@ export default async function AdminPerformanceReportPage(
         <CardContent className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-900">By agent</h3>
           {agentRows.length === 0 ? (
-            <p className="text-sm text-slate-500">No agents yet.</p>
+            <EmptyState icon={Users} title="No agents yet" description="Invite one from the Agents tab." />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
