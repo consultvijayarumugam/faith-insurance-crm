@@ -37,7 +37,7 @@ export function LocationCell({
       href={googleMapsUrl(latitude, longitude)}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1 text-xs hover:underline ${
+      className={`inline-flex items-center gap-1 rounded text-xs hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
         lowAccuracy ? "text-warning-600" : "text-brand-700"
       }`}
       title={accuracyM !== null ? `Accuracy: ±${Math.round(accuracyM)} m` : undefined}

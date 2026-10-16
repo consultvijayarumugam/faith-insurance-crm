@@ -6,6 +6,7 @@ import { Clock, Loader2, LogIn, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { formatDateTime } from "@/lib/format";
 import { punchIn, punchOut } from "@/lib/actions/attendance";
 import { captureLocation } from "@/lib/geolocation";
@@ -24,6 +25,7 @@ export function PunchCard({
   punchOutAt: string | null;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [locationNotice, setLocationNotice] = React.useState<string | null>(null);
@@ -37,11 +39,13 @@ export function PunchCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't punch in", description: result.error, variant: "error" });
       return;
     }
     if (!result.locationCaptured && location.status !== "captured") {
       setLocationNotice(locationNoticeFor(location.status));
     }
+    toast({ title: "Punched in", variant: "success" });
     router.refresh();
   }
 
@@ -54,11 +58,13 @@ export function PunchCard({
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't punch out", description: result.error, variant: "error" });
       return;
     }
     if (!result.locationCaptured && location.status !== "captured") {
       setLocationNotice(locationNoticeFor(location.status));
     }
+    toast({ title: "Punched out", variant: "success" });
     router.refresh();
   }
 
@@ -76,7 +82,7 @@ export function PunchCard({
         {!punchInAt ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-500">You haven&apos;t punched in today.</p>
-            <Button type="button" size="sm" onClick={handlePunchIn} disabled={pending}>
+            <Button type="button" className="min-h-11" onClick={handlePunchIn} disabled={pending}>
               {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogIn className="h-3.5 w-3.5" />}
               Punch In
             </Button>
@@ -86,7 +92,7 @@ export function PunchCard({
             <p className="text-sm text-slate-700">
               Punched in at <span className="font-medium">{formatDateTime(punchInAt)}</span>
             </p>
-            <Button type="button" size="sm" variant="secondary" onClick={handlePunchOut} disabled={pending}>
+            <Button type="button" className="min-h-11" variant="secondary" onClick={handlePunchOut} disabled={pending}>
               {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5" />}
               Punch Out
             </Button>

@@ -68,7 +68,7 @@ export function CalendarGrid({
                   <Link
                     key={e.id}
                     href={`${detailBasePath}/${e.leadId}`}
-                    className="flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[11px] text-slate-700 hover:bg-slate-100"
+                    className="flex items-center gap-1 truncate rounded px-1.5 py-1 text-[11px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     title={`${e.leadName} — ${format(new Date(e.scheduledAt), "p")}`}
                   >
                     <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", STATUS_DOT[e.status])} />

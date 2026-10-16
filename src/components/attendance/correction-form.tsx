@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { requestCorrection } from "@/lib/actions/attendance";
 
 function todayIST(): string {
@@ -16,6 +17,7 @@ function todayIST(): string {
 
 export function CorrectionForm() {
   const router = useRouter();
+  const { toast } = useToast();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -30,9 +32,11 @@ export function CorrectionForm() {
     setPending(false);
     if (result?.error) {
       setError(result.error);
+      toast({ title: "Couldn't submit request", description: result.error, variant: "error" });
       return;
     }
     setSubmitted(true);
+    toast({ title: "Correction request submitted", variant: "success" });
     formRef.current?.reset();
     router.refresh();
   }
@@ -48,9 +52,7 @@ export function CorrectionForm() {
         </div>
 
         {error && <Alert variant="error">{error}</Alert>}
-        {submitted && !error && (
-          <p className="text-sm text-success-600">Request submitted. An admin will review it.</p>
-        )}
+        {submitted && !error && <Alert variant="success">Request submitted. An admin will review it.</Alert>}
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -71,7 +73,7 @@ export function CorrectionForm() {
             <Label htmlFor="reason">Reason</Label>
             <Input id="reason" name="reason" placeholder="e.g. Forgot to punch out before leaving" required />
           </div>
-          <Button type="submit" size="sm" disabled={pending}>
+          <Button type="submit" size="sm" className="min-h-11" disabled={pending}>
             {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Submit request
           </Button>

@@ -41,13 +41,13 @@ export function CalendarNav({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <Button type="button" size="sm" variant="secondary" onClick={() => go({ date: prevDate })}>
+        <Button type="button" size="sm" className="min-h-11 min-w-11" variant="secondary" onClick={() => go({ date: prevDate })}>
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
-        <Button type="button" size="sm" variant="secondary" onClick={() => go({ date: todayDate })}>
+        <Button type="button" size="sm" className="min-h-11" variant="secondary" onClick={() => go({ date: todayDate })}>
           Today
         </Button>
-        <Button type="button" size="sm" variant="secondary" onClick={() => go({ date: nextDate })}>
+        <Button type="button" size="sm" className="min-h-11 min-w-11" variant="secondary" onClick={() => go({ date: nextDate })}>
           <ChevronRight className="h-3.5 w-3.5" />
         </Button>
         <h2 className="ml-2 text-lg font-semibold tracking-tight text-slate-900">{label}</h2>
@@ -58,7 +58,7 @@ export function CalendarNav({
           <Select
             value={agent}
             onChange={(e) => go({ agent: e.target.value })}
-            className="h-8 w-44 py-0 text-xs"
+            className="w-44 text-xs"
           >
             <option value="">All agents</option>
             {agents.map((a) => (
@@ -75,7 +75,7 @@ export function CalendarNav({
               type="button"
               onClick={() => go({ view: v })}
               className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium capitalize transition-colors",
+                "min-h-11 rounded-md px-3 text-xs font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2",
                 view === v ? "bg-brand-600 text-white" : "text-slate-600 hover:bg-slate-100"
               )}
             >
